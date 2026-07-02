@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
+  ArrowLeft,
   Eye,
   EyeOff,
   Loader2,
@@ -113,7 +114,16 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen w-full bg-black selection:bg-white/30 p-2 transition-all duration-500 lg:h-screen lg:overflow-hidden lg:p-4">
+    <main className="relative flex min-h-screen w-full bg-black selection:bg-white/30 p-2 transition-all duration-500 lg:h-screen lg:overflow-hidden lg:p-4">
+      {/* Back button to landing page */}
+      <Link
+        href="/"
+        className="absolute left-6 top-6 z-20 flex items-center gap-1.5 text-xs text-[#E1E0CC]/75 hover:text-[#E1E0CC] transition-all px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/5 hover:border-white/10 hover:scale-[1.02] shadow-lg"
+      >
+        <ArrowLeft className="size-3.5" />
+        <span>Back to home</span>
+      </Link>
+
       {/* Left Column (Hero) */}
       <section className="relative hidden w-[52%] flex-col items-center justify-end pb-32 px-12 rounded-3xl overflow-hidden shadow-2xl h-full lg:flex">
         {/* Background Video */}
