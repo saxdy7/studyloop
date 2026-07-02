@@ -308,10 +308,8 @@ export function Landing() {
           </div>
           StudyLoop
         </div>
-        <Button asChild size="sm">
-          <Link href="/study">
-            Start studying <ArrowRight className="size-4" />
-          </Link>
+        <Button size="sm" render={<Link href="/study" />}>
+          Start studying <ArrowRight className="size-4" />
         </Button>
       </motion.nav>
 
@@ -355,14 +353,16 @@ export function Landing() {
             animate="visible"
             className="flex flex-col gap-3 sm:flex-row"
           >
-            <Button asChild size="lg" className="group shadow-lg shadow-primary/25">
-              <Link href="/study">
-                Upload your notes
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-              </Link>
+            <Button
+              size="lg"
+              className="group shadow-lg shadow-primary/25"
+              render={<Link href="/study" />}
+            >
+              Upload your notes
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="#how-it-works">See the loop</Link>
+            <Button size="lg" variant="outline" render={<Link href="#how-it-works" />}>
+              See the loop
             </Button>
           </motion.div>
           <motion.p
@@ -490,11 +490,13 @@ export function Landing() {
                 Paste today&apos;s lecture notes and find your weak spots in
                 under a minute.
               </p>
-              <Button asChild size="lg" className="group shadow-lg shadow-primary/25">
-                <Link href="/study">
-                  Start the loop
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-                </Link>
+              <Button
+                size="lg"
+                className="group shadow-lg shadow-primary/25"
+                render={<Link href="/study" />}
+              >
+                Start the loop
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </CardContent>
           </Card>
