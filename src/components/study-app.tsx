@@ -1,15 +1,29 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Repeat2 } from "lucide-react";
+import {
+  BrainCircuit,
+  FileUp,
+  Loader2,
+  Repeat2,
+  Sparkles,
+  Target,
+} from "lucide-react";
 import { toast } from "sonner";
-import { useConvex, useMutation } from "convex/react";
+import { useConvex, useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { SourceInput } from "./source-input";
 import { QuizRunner } from "./quiz-runner";
 import { ResultsView } from "./results-view";
-import { computeTopicStats, loadSession, saveSession, scoreRound } from "@/lib/study";
+import {
+  computeTopicStats,
+  loadSession,
+  saveSession,
+  scoreRound,
+} from "@/lib/study";
 import type { AnswerMap, Question, Quiz, Session, Topic } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 type Stage = "loading" | "input" | "quiz" | "results";
 
@@ -52,6 +66,38 @@ function reconcileRetest(session: Session, quiz: Quiz): Question[] {
   }));
 }
 
+type DbSessionData = {
+  session: {
+    sessionId: string;
+    title: string;
+    sourceText: string;
+    topics: Topic[];
+    createdAt: number;
+  };
+  rounds: {
+    round: number;
+    questions: Question[];
+    answers: AnswerMap;
+    scoredAt: number;
+  }[];
+};
+
+function toSession(data: DbSessionData): Session {
+  return {
+    id: data.session.sessionId,
+    title: data.session.title,
+    sourceText: data.session.sourceText,
+    topics: data.session.topics,
+    createdAt: data.session.createdAt,
+    rounds: data.rounds.map((r) => ({
+      round: r.round,
+      questions: r.questions,
+      answers: r.answers,
+      scoredAt: r.scoredAt,
+    })),
+  };
+}
+
 export function StudyApp() {
   const [stage, setStage] = useState<Stage>("loading");
   const [session, setSession] = useState<Session | null>(null);
@@ -62,6 +108,8 @@ export function StudyApp() {
   const convex = useConvex();
   const upsertSession = useMutation(api.study.upsertSession);
   const saveRound = useMutation(api.study.saveRound);
+  const stats = useQuery(api.study.stats);
+  const recentSessions = useQuery(api.study.listSessions);
 
   // Restore the latest session from the database (fall back to localStorage
   // if the DB is unreachable) so progress survives reloads and devices.
@@ -72,20 +120,7 @@ export function StudyApp() {
         const latest = await convex.query(api.study.latestSession, {});
         if (cancelled) return;
         if (latest && latest.rounds.length > 0) {
-          const restored: Session = {
-            id: latest.session.sessionId,
-            title: latest.session.title,
-            sourceText: latest.session.sourceText,
-            topics: latest.session.topics,
-            createdAt: latest.session.createdAt,
-            rounds: latest.rounds.map((r) => ({
-              round: r.round,
-              questions: r.questions,
-              answers: r.answers,
-              scoredAt: r.scoredAt,
-            })),
-          };
-          setSession(restored);
+          setSession(toSession(latest));
           setStage("results");
           return;
         }
@@ -104,6 +139,20 @@ export function StudyApp() {
     };
   }, [convex]);
 
+  async function openSession(sessionId: string) {
+    try {
+      const data = await convex.query(api.study.getSession, { sessionId });
+      if (data && data.rounds.length > 0) {
+        setSession(toSession(data));
+        setStage("results");
+      } else {
+        toast.info("That session has no completed rounds yet.");
+      }
+    } catch {
+      toast.error("Could not load that session.");
+    }
+  }
+
   async function handleGenerate(text: string) {
     setBusy(true);
     try {
@@ -120,7 +169,6 @@ export function StudyApp() {
       setQuestions(quiz.questions);
       setStage("quiz");
 
-      // Persist the session shell to the DB (non-blocking for the UI flow).
       upsertSession({
         sessionId: next.id,
         title: next.title,
@@ -154,10 +202,9 @@ export function StudyApp() {
     setStage("results");
 
     const { correct, total } = scoreRound(questions, answers);
-    const stats = computeTopicStats(updated.topics, updated.rounds);
-    const weakTopics = stats.filter((s) => s.weak).map((s) => s.name);
+    const topicStats = computeTopicStats(updated.topics, updated.rounds);
+    const weakTopics = topicStats.filter((s) => s.weak).map((s) => s.name);
 
-    // Persist the round to Convex (source of truth).
     saveRound({
       sessionId: updated.id,
       round: updated.rounds.length,
@@ -165,14 +212,13 @@ export function StudyApp() {
       total,
       questions,
       answers,
-      topicStats: stats,
+      topicStats,
       weakTopics,
       scoredAt: Date.now(),
     })
       .then(() => toast.success("Progress saved"))
       .catch(() => {});
 
-    // Mirror the round into the Lemma pod (fire-and-forget).
     fetch("/api/rounds", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -182,14 +228,14 @@ export function StudyApp() {
         round: updated.rounds.length,
         score: correct,
         total,
-        topicStats: stats,
+        topicStats,
         weakTopics,
       }),
     }).catch(() => {});
   }
 
   async function handleRetest(weakTopics: string[]) {
-    if (!session) return;
+    if (!session || weakTopics.length === 0) return;
     setRetesting(true);
     try {
       const quiz = await callGenerate({
@@ -215,56 +261,280 @@ export function StudyApp() {
     setStage("input");
   }
 
+  /* ------------- derived dashboard data ------------- */
+
+  const topicStats = session
+    ? computeTopicStats(session.topics, session.rounds)
+    : [];
+  const weakTopics = topicStats.filter((s) => s.weak).map((s) => s.name);
+  const lastRound = session?.rounds[session.rounds.length - 1];
+
+  const historyRows = lastRound
+    ? lastRound.questions.map((q) => {
+        const stat = topicStats.find((s) => s.topicId === q.topicId);
+        const status = !stat
+          ? { label: "New", color: "text-muted-foreground" }
+          : stat.mastery >= 0.8
+            ? { label: "Mastered", color: "text-green-500" }
+            : stat.mastery >= 0.5
+              ? { label: "Re-testing", color: "text-amber-500" }
+              : { label: "Weak spot", color: "text-red-500" };
+        return {
+          question: q.question,
+          topic: stat?.name ?? "General",
+          mastery: stat ? `${stat.correct}/${stat.total}` : "–",
+          status,
+        };
+      })
+    : [];
+
+  const statCells = [
+    { label: "SESSIONS", value: stats?.sessions, sub: "Study sessions" },
+    { label: "ROUNDS", value: stats?.rounds, sub: "Quiz rounds run" },
+    { label: "ANSWERED", value: stats?.questionsAnswered, sub: "Questions answered" },
+    { label: "TARGET", value: "80%", sub: "Mastery threshold" },
+  ];
+
+  const navItems = [
+    { icon: FileUp, label: "Upload notes", action: handleReset, active: stage === "input" },
+    { icon: BrainCircuit, label: "Study plan", action: undefined, active: stage === "quiz" },
+    { icon: Target, label: "Weak spots", action: undefined, active: stage === "results" },
+  ];
+
+  /* ------------- render ------------- */
+
   if (stage === "loading") {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-3 px-4 py-32 text-muted-foreground">
-        <Repeat2 className="size-6 animate-spin" />
+      <div className="flex min-h-screen items-center justify-center gap-3 text-muted-foreground">
+        <Repeat2 className="size-5 animate-spin" />
         <p className="text-sm">Loading your progress…</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-8 px-4 py-12">
-      <header className="space-y-2 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground">
-          <Repeat2 className="size-3.5" /> StudyLoop · your weak spots, hunted
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {stage === "input" ? "What are we mastering today?" : session?.title}
-        </h1>
-        {stage === "input" && (
-          <p className="text-sm text-muted-foreground">
-            Drop your notes below — the agent handles the rest.
-          </p>
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-white/5 bg-card/40 px-4 py-5 md:flex">
+        <Link href="/" className="mb-6 flex items-center gap-2 font-semibold tracking-tight">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-primary/15">
+            <Repeat2 className="size-4 text-primary" />
+          </div>
+          StudyLoop
+        </Link>
+
+        {session && (
+          <div className="mb-5 flex items-center gap-2">
+            <span className="flex size-5 items-center justify-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
+              {session.title.charAt(0).toUpperCase()}
+            </span>
+            <span className="truncate text-xs text-foreground/80">{session.title}</span>
+          </div>
         )}
-      </header>
 
-      {stage === "input" && (
-        <SourceInput onGenerate={handleGenerate} busy={busy} />
-      )}
+        <nav className="space-y-1">
+          {navItems.map((item) => (
+            <button
+              key={item.label}
+              onClick={item.action}
+              disabled={!item.action}
+              className={cn(
+                "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs transition-colors",
+                item.active
+                  ? "bg-white/5 text-foreground"
+                  : "text-muted-foreground",
+                item.action && "hover:bg-white/5 hover:text-foreground"
+              )}
+            >
+              <item.icon className="size-3.5" />
+              {item.label}
+            </button>
+          ))}
+        </nav>
 
-      {stage === "quiz" && session && (
-        <QuizRunner
-          questions={questions}
-          topics={session.topics}
-          heading={
-            session.rounds.length === 0
-              ? session.title
-              : `Re-test · Round ${session.rounds.length + 1}`
-          }
-          onComplete={handleComplete}
-        />
-      )}
+        <div className="mt-6 border-t border-white/5 pt-4">
+          <p className="mb-2 px-2.5 text-[10px] tracking-widest text-muted-foreground/60">
+            RECENT SESSIONS
+          </p>
+          <div className="space-y-0.5">
+            {recentSessions === undefined && (
+              <p className="px-2.5 text-xs text-muted-foreground/50">Loading…</p>
+            )}
+            {recentSessions?.length === 0 && (
+              <p className="px-2.5 text-xs text-muted-foreground/50">
+                No sessions yet
+              </p>
+            )}
+            {recentSessions?.map((s) => (
+              <button
+                key={s.sessionId}
+                onClick={() => openSession(s.sessionId)}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-white/5",
+                  session?.id === s.sessionId
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                <span
+                  className={cn(
+                    "size-1.5 shrink-0 rounded-full",
+                    s.roundCount > 0 ? "bg-green-500/70" : "bg-white/20"
+                  )}
+                />
+                <span className="truncate">{s.title}</span>
+                <span className="ml-auto shrink-0 text-[10px] text-muted-foreground/50">
+                  R{s.roundCount}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {stage === "results" && session && (
-        <ResultsView
-          session={session}
-          onRetest={handleRetest}
-          onReset={handleReset}
-          retesting={retesting}
-        />
-      )}
+        <div className="mt-auto pt-6 text-[10px] text-muted-foreground/50">
+          Groq · Convex · Lemma
+        </div>
+      </aside>
+
+      {/* Main */}
+      <div className="min-w-0 flex-1">
+        {/* Header */}
+        <header className="flex items-center justify-between gap-3 border-b border-white/5 px-4 py-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <Link href="/" className="md:hidden">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/15">
+                <Repeat2 className="size-4 text-primary" />
+              </div>
+            </Link>
+            <span className="hidden size-9 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground md:flex">
+              {(session?.title ?? "S").charAt(0).toUpperCase()}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">
+                {session?.title ?? "New session"}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {stage === "input" && "Drop your notes to start the loop"}
+                {stage === "quiz" &&
+                  (session && session.rounds.length > 0
+                    ? `Re-test · Round ${session.rounds.length + 1}`
+                    : "Round 1 in progress")}
+                {stage === "results" &&
+                  session &&
+                  `Round ${session.rounds.length} · ${
+                    weakTopics.length
+                  } weak spot${weakTopics.length === 1 ? "" : "s"} remaining`}
+              </p>
+            </div>
+          </div>
+          {stage === "results" && (
+            <button
+              onClick={() => handleRetest(weakTopics)}
+              disabled={weakTopics.length === 0 || retesting}
+              className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs text-foreground transition-colors hover:bg-white/15 disabled:opacity-50"
+            >
+              {retesting ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="size-3.5" />
+              )}
+              {weakTopics.length === 0 ? "All mastered 🎉" : "Re-test weak spots"}
+            </button>
+          )}
+        </header>
+
+        {/* Stats row */}
+        <div className="px-4 pt-4 sm:px-6">
+          <div className="grid grid-cols-2 divide-x divide-white/5 rounded-xl bg-white/[0.03] ring-1 ring-white/5 sm:grid-cols-4">
+            {statCells.map((s) => (
+              <div key={s.label} className="px-4 py-3">
+                <p className="text-[9px] tracking-widest text-muted-foreground/60">
+                  {s.label}
+                </p>
+                <p className="text-xl font-medium tabular-nums">
+                  {s.value === undefined
+                    ? "–"
+                    : typeof s.value === "number"
+                      ? s.value.toLocaleString()
+                      : s.value}
+                </p>
+                <p className="text-[10px] text-muted-foreground">{s.sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Stage content */}
+        <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
+          {stage === "input" && (
+            <>
+              <div className="mb-6 text-center">
+                <h1 className="text-2xl font-bold tracking-tight">
+                  What are we mastering today?
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Drop your notes below — the agent handles the rest.
+                </p>
+              </div>
+              <SourceInput onGenerate={handleGenerate} busy={busy} />
+            </>
+          )}
+
+          {stage === "quiz" && session && (
+            <QuizRunner
+              questions={questions}
+              topics={session.topics}
+              heading={
+                session.rounds.length === 0
+                  ? session.title
+                  : `Re-test · Round ${session.rounds.length + 1}`
+              }
+              onComplete={handleComplete}
+            />
+          )}
+
+          {stage === "results" && session && (
+            <ResultsView
+              session={session}
+              onRetest={handleRetest}
+              onReset={handleReset}
+              retesting={retesting}
+            />
+          )}
+        </div>
+
+        {/* Question history */}
+        {stage === "results" && historyRows.length > 0 && (
+          <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6">
+            <div className="rounded-xl bg-white/[0.03] ring-1 ring-white/5">
+              <p className="border-b border-white/5 px-4 py-2.5 text-[10px] tracking-widest text-muted-foreground/60">
+                QUESTION HISTORY · ROUND {lastRound?.round}
+              </p>
+              {historyRows.map((row) => (
+                <div
+                  key={row.question}
+                  className="flex items-center justify-between gap-3 border-b border-white/5 px-4 py-2.5 last:border-b-0"
+                >
+                  <p className="truncate text-xs text-foreground/80">
+                    {row.question}
+                  </p>
+                  <div className="flex shrink-0 items-center gap-4">
+                    <span className="hidden text-[11px] text-muted-foreground md:inline">
+                      {row.topic}
+                    </span>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">
+                      {row.mastery}
+                    </span>
+                    <span className={cn("w-16 text-right text-[11px]", row.status.color)}>
+                      {row.status.label}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

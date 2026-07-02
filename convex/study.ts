@@ -83,6 +83,27 @@ export const getSession = query({
   },
 });
 
+export const listSessions = query({
+  args: {},
+  handler: async (ctx) => {
+    const sessions = await ctx.db.query("sessions").order("desc").take(12);
+    return Promise.all(
+      sessions.map(async (s) => {
+        const rounds = await ctx.db
+          .query("rounds")
+          .withIndex("by_sessionId", (q) => q.eq("sessionId", s.sessionId))
+          .collect();
+        return {
+          sessionId: s.sessionId,
+          title: s.title,
+          roundCount: rounds.length,
+          createdAt: s.createdAt,
+        };
+      })
+    );
+  },
+});
+
 export const latestSession = query({
   args: {},
   handler: async (ctx) => {
