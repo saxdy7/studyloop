@@ -250,7 +250,7 @@ export default function LoginPage() {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-start mt-4">
+            <div className="flex justify-center mt-4">
               <button
                 type="submit"
                 disabled={busy}
