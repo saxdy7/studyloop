@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     if (image) {
       activeModel = "meta-llama/llama-4-scout-17b-16e-instruct";
     } else if (needsThinking) {
-      activeModel = "deepseek-r1-distill-llama-70b";
+      activeModel = "qwen/qwen3.6-27b";
     } else if (process.env.GROQ_MODEL) {
       activeModel = process.env.GROQ_MODEL;
     }
