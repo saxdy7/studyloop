@@ -105,8 +105,8 @@ export function DashboardPage({
       icon: BookOpen,
       label: "Total Sessions",
       value: stats?.sessions ?? 0,
-      color: "text-violet-400",
-      bg: "bg-violet-500/10",
+      color: "text-[#E1E0CC]",
+      bg: "bg-[#E1E0CC]/10",
     },
     {
       icon: Zap,

@@ -174,27 +174,45 @@ function MockupSection() {
 /* ------------------------------------------------------------------ */
 
 function CoreFeatures() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+
   return (
     <section className="bg-black px-5 py-20 sm:px-8 md:py-28 text-center flex justify-center border-t border-white/5">
       <div className="w-full max-w-[1100px] mx-auto">
         {/* Header Block */}
         <div className="mx-auto max-w-2xl text-center mb-12 sm:mb-16">
-          <span className="inline-block text-[10px] sm:text-xs font-semibold uppercase tracking-[2px] bg-gradient-to-r from-[#E1E0CC] via-[#A78BFA] to-[#F472B6] bg-clip-text text-transparent mb-4">
-            Core Features
-          </span>
-          <h2 className="font-display mt-2 text-2xl font-normal sm:text-3xl md:text-4xl text-[#E1E0CC] tracking-tight">
-            Built for Speed & Mastery
+          <p className="font-display text-[10px] tracking-widest sm:text-xs mb-4" style={{ color: CREAM }}>
+            CORE FEATURES
+          </p>
+          <h2 className="font-display mt-2 text-2xl font-normal sm:text-3xl md:text-4xl">
+            <WordsPullUpMultiStyle
+              segments={[
+                { text: "Built for Speed ", className: "text-[#E1E0CC]" },
+                { text: "& Mastery.", className: "text-gray-500" },
+              ]}
+            />
           </h2>
-          <p className="font-display mx-auto mt-4 max-w-md text-xs leading-relaxed text-gray-500 sm:text-sm">
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="font-display mx-auto mt-4 max-w-md text-xs leading-relaxed text-gray-500 sm:text-sm"
+          >
             Everything you need to turn raw study notes <br />
             into active recall loops.
-          </p>
+          </motion.p>
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div ref={ref} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Card 1 — Smart Note Processing */}
-          <div className="relative h-[340px] flex flex-col justify-end overflow-hidden rounded-[20px] border border-white/5 bg-[#101010] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] text-left group">
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="relative h-[340px] flex flex-col justify-end overflow-hidden rounded-[20px] border border-white/5 bg-[#101010] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] text-left group"
+          >
             {/* Top Radial Glow */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(225,224,204,0.12)_0%,rgba(225,224,204,0.03)_40%,transparent_70%)] pointer-events-none" />
 
@@ -229,10 +247,15 @@ function CoreFeatures() {
             <h3 className="relative z-10 p-6 text-sm font-semibold text-[#E1E0CC] tracking-wide">
               Smart Note Processing
             </h3>
-          </div>
+          </motion.div>
 
           {/* Card 2 — API Access */}
-          <div className="relative h-[340px] flex flex-col justify-end overflow-hidden rounded-[20px] border border-white/5 bg-[#101010] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] text-left group">
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="relative h-[340px] flex flex-col justify-end overflow-hidden rounded-[20px] border border-white/5 bg-[#101010] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] text-left group"
+          >
             {/* Top Radial Glow */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(167,139,250,0.12)_0%,rgba(167,139,250,0.03)_40%,transparent_70%)] pointer-events-none" />
 
@@ -250,10 +273,15 @@ function CoreFeatures() {
             <h3 className="relative z-10 p-6 text-sm font-semibold text-[#E1E0CC] tracking-wide">
               Lemma Pod API Sync
             </h3>
-          </div>
+          </motion.div>
 
           {/* Card 3 — Project Library */}
-          <div className="relative h-[340px] flex flex-col justify-end overflow-hidden rounded-[20px] border border-white/5 bg-[#101010] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] text-left group">
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.34, ease: [0.22, 1, 0.36, 1] }}
+            className="relative h-[340px] flex flex-col justify-end overflow-hidden rounded-[20px] border border-white/5 bg-[#101010] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] text-left group"
+          >
             {/* Top Radial Glow */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(244,114,182,0.12)_0%,rgba(244,114,182,0.03)_40%,transparent_70%)] pointer-events-none" />
 
@@ -298,7 +326,7 @@ function CoreFeatures() {
             <h3 className="relative z-10 p-6 text-sm font-semibold text-[#E1E0CC] tracking-wide">
               Persistent Loop Library
             </h3>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
