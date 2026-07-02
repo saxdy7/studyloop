@@ -4,7 +4,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 export function LiveStats() {
-  const stats = useQuery(api.study.stats);
+  const stats = useQuery(api.study.stats, {});
 
   const items = [
     { label: "Study sessions", value: stats?.sessions },

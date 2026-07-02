@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Almarai, Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
+import { AuthProvider } from "@/components/auth-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -44,10 +45,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${almarai.variable} ${instrumentSerif.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>
-          {children}
-          <Toaster richColors position="top-center" />
-        </Providers>
+        <AuthProvider>
+          <Providers>
+            {children}
+            <Toaster richColors position="top-center" />
+          </Providers>
+        </AuthProvider>
       </body>
     </html>
   );

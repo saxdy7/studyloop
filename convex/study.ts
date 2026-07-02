@@ -28,6 +28,7 @@ const topicStatValidator = v.object({
 export const upsertSession = mutation({
   args: {
     sessionId: v.string(),
+    userId: v.optional(v.string()),
     title: v.string(),
     sourceText: v.string(),
     topics: v.array(topicValidator),
@@ -84,9 +85,15 @@ export const getSession = query({
 });
 
 export const listSessions = query({
-  args: {},
-  handler: async (ctx) => {
-    const sessions = await ctx.db.query("sessions").order("desc").take(12);
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx, { userId }) => {
+    const sessions = userId
+      ? await ctx.db
+          .query("sessions")
+          .withIndex("by_userId", (q) => q.eq("userId", userId))
+          .order("desc")
+          .take(12)
+      : await ctx.db.query("sessions").order("desc").take(12);
     return Promise.all(
       sessions.map(async (s) => {
         const rounds = await ctx.db
@@ -105,9 +112,15 @@ export const listSessions = query({
 });
 
 export const latestSession = query({
-  args: {},
-  handler: async (ctx) => {
-    const session = await ctx.db.query("sessions").order("desc").first();
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx, { userId }) => {
+    const session = userId
+      ? await ctx.db
+          .query("sessions")
+          .withIndex("by_userId", (q) => q.eq("userId", userId))
+          .order("desc")
+          .first()
+      : await ctx.db.query("sessions").order("desc").first();
     if (!session) return null;
     const rounds = await ctx.db
       .query("rounds")
@@ -131,10 +144,20 @@ export const clearAll = mutation({
 });
 
 export const stats = query({
-  args: {},
-  handler: async (ctx) => {
-    const sessions = await ctx.db.query("sessions").collect();
-    const rounds = await ctx.db.query("rounds").collect();
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx, { userId }) => {
+    const sessions = userId
+      ? await ctx.db
+          .query("sessions")
+          .withIndex("by_userId", (q) => q.eq("userId", userId))
+          .collect()
+      : await ctx.db.query("sessions").collect();
+    const allRounds = await ctx.db.query("rounds").collect();
+    const rounds = userId
+      ? allRounds.filter((r) =>
+          sessions.some((s) => s.sessionId === r.sessionId)
+        )
+      : allRounds;
     const questionsAnswered = rounds.reduce((sum, r) => sum + r.total, 0);
     return {
       sessions: sessions.length,

@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   BrainCircuit,
   FileUp,
   Loader2,
+  LogOut,
   Repeat2,
   Sparkles,
   Target,
@@ -13,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useAuth } from "@/components/auth-provider";
 import { SourceInput } from "./source-input";
 import { QuizRunner } from "./quiz-runner";
 import { ResultsView } from "./results-view";
@@ -105,19 +108,33 @@ export function StudyApp() {
   const [busy, setBusy] = useState(false);
   const [retesting, setRetesting] = useState(false);
 
+  const router = useRouter();
+  const { user, loading: authLoading, signOutUser } = useAuth();
+
   const convex = useConvex();
   const upsertSession = useMutation(api.study.upsertSession);
   const saveRound = useMutation(api.study.saveRound);
-  const stats = useQuery(api.study.stats);
-  const recentSessions = useQuery(api.study.listSessions);
+  const stats = useQuery(api.study.stats, user ? { userId: user.uid } : "skip");
+  const recentSessions = useQuery(
+    api.study.listSessions,
+    user ? { userId: user.uid } : "skip"
+  );
 
-  // Restore the latest session from the database (fall back to localStorage
-  // if the DB is unreachable) so progress survives reloads and devices.
+  // Not signed in → login page.
   useEffect(() => {
+    if (!authLoading && !user) router.replace("/login");
+  }, [authLoading, user, router]);
+
+  // Restore the user's latest session from the database (fall back to
+  // localStorage if the DB is unreachable) so progress survives reloads.
+  useEffect(() => {
+    if (!user) return;
     let cancelled = false;
     (async () => {
       try {
-        const latest = await convex.query(api.study.latestSession, {});
+        const latest = await convex.query(api.study.latestSession, {
+          userId: user.uid,
+        });
         if (cancelled) return;
         if (latest && latest.rounds.length > 0) {
           setSession(toSession(latest));
@@ -137,7 +154,7 @@ export function StudyApp() {
     return () => {
       cancelled = true;
     };
-  }, [convex]);
+  }, [convex, user]);
 
   async function openSession(sessionId: string) {
     try {
@@ -171,6 +188,7 @@ export function StudyApp() {
 
       upsertSession({
         sessionId: next.id,
+        userId: user?.uid,
         title: next.title,
         sourceText: next.sourceText,
         topics: next.topics,
@@ -303,11 +321,13 @@ export function StudyApp() {
 
   /* ------------- render ------------- */
 
-  if (stage === "loading") {
+  if (authLoading || !user || stage === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center gap-3 text-muted-foreground">
         <Repeat2 className="size-5 animate-spin" />
-        <p className="text-sm">Loading your progress…</p>
+        <p className="text-sm">
+          {authLoading || !user ? "Checking your account…" : "Loading your progress…"}
+        </p>
       </div>
     );
   }
@@ -391,8 +411,38 @@ export function StudyApp() {
           </div>
         </div>
 
-        <div className="mt-auto pt-6 text-[10px] text-muted-foreground/50">
-          Groq · Convex · Lemma
+        <div className="mt-auto space-y-3 pt-6">
+          <div className="flex items-center gap-2">
+            {user.photoURL ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.photoURL}
+                alt=""
+                className="size-6 rounded-full"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary">
+                {(user.displayName ?? user.email ?? "U").charAt(0).toUpperCase()}
+              </span>
+            )}
+            <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">
+              {user.displayName ?? user.email}
+            </span>
+            <button
+              onClick={async () => {
+                await signOutUser();
+                router.replace("/login");
+              }}
+              title="Sign out"
+              className="text-muted-foreground/60 transition-colors hover:text-foreground"
+            >
+              <LogOut className="size-3.5" />
+            </button>
+          </div>
+          <div className="text-[10px] text-muted-foreground/50">
+            Groq · Convex · Lemma
+          </div>
         </div>
       </aside>
 

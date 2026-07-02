@@ -27,7 +27,7 @@ const inboxRows = [
 ];
 
 export function AppMockup() {
-  const stats = useQuery(api.study.stats);
+  const stats = useQuery(api.study.stats, {});
 
   const statCells = [
     { label: "SESSIONS", value: stats?.sessions ?? "–", sub: "Study sessions" },

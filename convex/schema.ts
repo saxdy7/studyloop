@@ -4,6 +4,7 @@ import { v } from "convex/values";
 export default defineSchema({
   sessions: defineTable({
     sessionId: v.string(),
+    userId: v.optional(v.string()),
     title: v.string(),
     sourceText: v.string(),
     topics: v.array(
@@ -14,7 +15,9 @@ export default defineSchema({
       })
     ),
     createdAt: v.number(),
-  }).index("by_sessionId", ["sessionId"]),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_userId", ["userId"]),
 
   rounds: defineTable({
     sessionId: v.string(),
