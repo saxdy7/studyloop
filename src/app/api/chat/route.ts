@@ -60,14 +60,21 @@ export async function POST(req: NextRequest) {
       webSearchContext = await searchWeb(searchQuery);
     }
 
-    // 2. Select model (use vision model if image is provided)
-    const activeModel = image ? "llama-3.2-11b-vision-preview" : (process.env.GROQ_MODEL || "llama-3.3-70b-versatile");
-
     // 3. Detect Think Toggle
     const needsThinking = lastMsg.startsWith("[Think: ");
 
     // 4. Detect Canvas Toggle
     const isCanvas = lastMsg.startsWith("[Canvas: ");
+
+    // 2. Select model (use vision model if image is provided, deepseek-r1 for reasoning, fallback to llama-3.3)
+    let activeModel = "llama-3.3-70b-versatile";
+    if (image) {
+      activeModel = "llama-3.2-11b-vision-preview";
+    } else if (needsThinking) {
+      activeModel = "deepseek-r1-distill-llama-70b";
+    } else if (process.env.GROQ_MODEL) {
+      activeModel = process.env.GROQ_MODEL;
+    }
 
     const systemPrompt = `You are "LoopBot", an intelligent, high-end AI study assistant for StudyLoop.
 Your goal is to help the user master their study material.

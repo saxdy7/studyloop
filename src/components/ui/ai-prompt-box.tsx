@@ -461,6 +461,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const promptBoxRef = React.useRef<HTMLDivElement>(null);
   const recognitionRef = React.useRef<any>(null);
+  const initialInputRef = React.useRef("");
 
   const handleToggleChange = (value: string) => {
     if (value === "search") {
@@ -560,27 +561,23 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
           rec.continuous = true;
           rec.interimResults = true;
           rec.lang = "en-US";
+          initialInputRef.current = input;
 
           rec.onresult = (e: any) => {
-            let finalResult = "";
-            for (let i = e.resultIndex; i < e.results.length; ++i) {
-              if (e.results[i].isFinal) {
-                finalResult += e.results[i][0].transcript;
-              }
+            let accumulatedSpeech = "";
+            for (let i = 0; i < e.results.length; ++i) {
+              accumulatedSpeech += e.results[i][0].transcript;
             }
-            if (finalResult) {
-              setInput((prev) => {
-                const clean = prev.trim();
-                return clean ? `${clean} ${finalResult.trim()}` : finalResult.trim();
-              });
-            }
+            setInput(() => {
+              const base = initialInputRef.current.trim();
+              const speech = accumulatedSpeech.trim();
+              return base ? `${base} ${speech}` : speech;
+            });
           };
 
           rec.onerror = (err: any) => {
             const errType = err.error || "unknown";
-            if (errType === "aborted") {
-              return;
-            }
+            if (errType === "aborted") return;
 
             console.error("Speech recognition error:", errType, err);
             if (errType === "not-allowed") {
@@ -593,20 +590,20 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
               toast.error(`Speech recognition error: ${errType}`);
             }
 
-            if (recognitionRef.current) {
-              try {
-                recognitionRef.current.abort();
-              } catch (e) {}
-              recognitionRef.current = null;
-            }
+            setIsRecording(false);
+          };
+
+          rec.onend = () => {
             setIsRecording(false);
           };
 
           rec.start();
           recognitionRef.current = rec;
+          setIsRecording(true);
         } catch (err) {
           console.error("Failed to start speech recognition:", err);
           toast.error("Could not start microphone listener.");
+          setIsRecording(false);
         }
       } else {
         toast.error("Speech recognition is not supported in this browser. Try Google Chrome or Microsoft Edge!");
@@ -827,9 +824,9 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                   : "bg-transparent hover:bg-gray-600/30 text-[#9CA3AF] hover:text-[#D1D5DB]"
               )}
               onClick={() => {
-                if (isRecording) setIsRecording(false);
+                if (isRecording) handleStopRecording(0);
                 else if (hasContent) handleSubmit();
-                else setIsRecording(true);
+                else handleStartRecording();
               }}
               disabled={isLoading && !hasContent}
             >
