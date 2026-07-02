@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
+import { useRef, useState } from "react";
+import { AnimatePresence, motion, useInView } from "framer-motion";
 import {
   ArrowRight,
   BrainCircuit,
   Check,
+  ChevronDown,
   Code2,
   Database,
   FileUp,
@@ -606,6 +607,8 @@ const faqs = [
 ];
 
 function FAQ() {
+  const [open, setOpen] = useState<number | null>(0);
+
   return (
     <section className="bg-black px-4 py-20 sm:px-6 md:py-24">
       <div className="mx-auto max-w-3xl">
@@ -613,21 +616,57 @@ function FAQ() {
           <p className="font-display text-[10px] tracking-widest sm:text-xs" style={{ color: CREAM }}>
             QUESTIONS
           </p>
-          <h2 className="font-display mt-4 text-2xl font-normal sm:text-3xl md:text-4xl" style={{ color: CREAM }}>
-            <WordsPullUp text="Good to know" />
+          <h2
+            className="font-display mt-4 whitespace-nowrap text-2xl font-normal sm:text-3xl md:text-4xl"
+            style={{ color: CREAM }}
+          >
+            Good to know
           </h2>
         </div>
+
         <div className="space-y-3">
-          {faqs.map((item) => (
-            <div key={item.q} className="rounded-2xl border border-white/5 bg-[#101010] p-5 sm:p-6">
-              <h3 className="font-display mb-2 text-sm font-medium sm:text-base" style={{ color: CREAM }}>
-                {item.q}
-              </h3>
-              <p className="font-display text-xs leading-relaxed text-gray-400 sm:text-sm">
-                {item.a}
-              </p>
-            </div>
-          ))}
+          {faqs.map((item, i) => {
+            const isOpen = open === i;
+            return (
+              <div
+                key={item.q}
+                className="overflow-hidden rounded-2xl border border-white/5 bg-[#101010]"
+              >
+                <button
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  aria-expanded={isOpen}
+                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
+                >
+                  <span
+                    className="font-display text-sm font-medium sm:text-base"
+                    style={{ color: CREAM }}
+                  >
+                    {item.q}
+                  </span>
+                  <ChevronDown
+                    className={`size-4 shrink-0 text-gray-500 transition-transform duration-300 ${
+                      isOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <p className="font-display px-5 pb-5 text-xs leading-relaxed text-gray-400 sm:px-6 sm:pb-6 sm:text-sm">
+                        {item.a}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
