@@ -177,6 +177,8 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 }) => {
   const [time, setTime] = React.useState(0);
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const timeRef = React.useRef(time);
+  timeRef.current = time;
 
   React.useEffect(() => {
     if (isRecording) {
@@ -187,13 +189,13 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      onStopRecording(time);
+      onStopRecording(timeRef.current);
       setTime(0);
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRecording]);
+  }, [isRecording, onStartRecording, onStopRecording]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
