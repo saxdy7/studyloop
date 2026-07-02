@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export function SourceInput({
   onGenerate,
@@ -16,6 +17,7 @@ export function SourceInput({
 }) {
   const [text, setText] = useState("");
   const [numQuestions, setNumQuestions] = useState(8);
+  const [open, setOpen] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -90,21 +92,60 @@ export function SourceInput({
               {text.trim().length} characters
             </span>
             <div className="flex items-center gap-2">
-              <label htmlFor="num-questions" className="whitespace-nowrap text-xs text-muted-foreground">
+              <span className="whitespace-nowrap text-xs text-muted-foreground">
                 Questions:
-              </label>
-              <select
-                id="num-questions"
-                value={numQuestions}
-                onChange={(e) => setNumQuestions(Number(e.target.value))}
-                className="rounded-md border border-input bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                <option value={5}>5</option>
-                <option value={8}>8 (default)</option>
-                <option value={10}>10</option>
-                <option value={15}>15</option>
-                <option value={20}>20</option>
-              </select>
+              </span>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setOpen(!open)}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-foreground hover:bg-white/5 transition-all cursor-pointer select-none"
+                >
+                  <span>{numQuestions} {numQuestions === 8 ? "(default)" : ""}</span>
+                  <svg
+                    className={cn("size-3.5 text-muted-foreground transition-transform duration-200", open && "rotate-180")}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {open && (
+                  <>
+                    {/* Backdrop click overlay */}
+                    <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+                    <div className="absolute right-0 mt-1.5 w-32 rounded-lg border border-white/10 bg-[#161616] p-1 shadow-xl z-50 animate-in fade-in slide-in-from-top-1 duration-100">
+                      {[
+                        { value: 5, label: "5" },
+                        { value: 8, label: "8 (default)" },
+                        { value: 10, label: "10" },
+                        { value: 15, label: "15" },
+                        { value: 20, label: "20" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            setNumQuestions(opt.value);
+                            setOpen(false);
+                          }}
+                          className={cn(
+                            "w-full text-left rounded px-2.5 py-1.5 text-xs transition-colors cursor-pointer block select-none",
+                            numQuestions === opt.value
+                              ? "bg-white/5 text-[#E1E0CC] font-medium"
+                              : "text-muted-foreground hover:bg-white/[0.03] hover:text-foreground"
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex justify-end">

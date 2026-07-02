@@ -214,17 +214,19 @@ export function ProfilePage({
         {/* Stats grid */}
         <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {statCards.map((s) => (
-            <Card key={s.label} className="border-white/10 bg-card/60">
-              <CardContent className="px-4 py-4">
-                <div className={cn("mb-2 flex size-9 items-center justify-center rounded-lg", s.bg)}>
-                  <s.icon className={cn("size-4", s.color)} />
+            <Card key={s.label}>
+              <CardContent className="p-5 flex flex-col justify-between h-[110px]">
+                <div className="flex items-start justify-between w-full">
+                  <span className="text-[11px] text-muted-foreground font-medium">{s.label}</span>
+                  <div className={cn("flex size-7 items-center justify-center rounded-lg", s.bg)}>
+                    <s.icon className={cn("size-3.5", s.color)} />
+                  </div>
                 </div>
-                <p className="text-2xl font-bold tabular-nums">
-                  {typeof s.value === "number"
-                    ? s.value.toLocaleString()
-                    : s.value}
-                </p>
-                <p className="text-[11px] text-muted-foreground">{s.label}</p>
+                <div className="mt-2">
+                  <span className="text-2xl font-bold tracking-tight text-white tabular-nums">
+                    {typeof s.value === "number" ? s.value.toLocaleString() : s.value}
+                  </span>
+                </div>
               </CardContent>
             </Card>
           ))}
