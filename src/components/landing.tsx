@@ -1,517 +1,373 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
+import { ArrowRight, Check, Code2 } from "lucide-react";
+import { AppMockup } from "@/components/landing/app-mockup";
+import { ScrollRevealText } from "@/components/landing/scroll-reveal-text";
 import {
-  ArrowRight,
-  BrainCircuit,
-  Check,
-  Database,
-  FileUp,
-  ListChecks,
-  Repeat2,
-  Sparkles,
-  Target,
-  TrendingUp,
-  X,
-  Zap,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { LiveStats } from "@/components/live-stats";
-import { cn } from "@/lib/utils";
+  WordsPullUp,
+  WordsPullUpMultiStyle,
+} from "@/components/landing/words-pull-up";
 
-/* ---------- Floating gradient shapes (hero backdrop) ---------- */
+const CREAM = "#E1E0CC";
+const HERO_VIDEO =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_170732_8a9ccda6-5cff-4628-b164-059c500a2b41.mp4";
+const CARD_VIDEO =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260406_133058_0504132a-0cf3-4450-a370-8ea3b05c95d4.mp4";
 
-function FloatingShape({
-  className,
-  delay = 0,
-  width = 400,
-  height = 100,
-  rotate = 0,
-  gradient = "from-primary/15",
-}: {
-  className?: string;
-  delay?: number;
-  width?: number;
-  height?: number;
-  rotate?: number;
-  gradient?: string;
-}) {
+/* ------------------------------------------------------------------ */
+/* Hero                                                                */
+/* ------------------------------------------------------------------ */
+
+function Hero() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -120, rotate: rotate - 12 }}
-      animate={{ opacity: 1, y: 0, rotate }}
-      transition={{
-        duration: 2.2,
-        delay,
-        ease: [0.23, 0.86, 0.39, 0.96],
-        opacity: { duration: 1.1 },
-      }}
-      className={cn("absolute", className)}
-    >
-      <motion.div
-        animate={{ y: [0, 14, 0] }}
-        transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-        style={{ width, height }}
-        className="relative"
-      >
-        <div
-          className={cn(
-            "absolute inset-0 rounded-full bg-gradient-to-r to-transparent",
-            gradient,
-            "border border-white/10 backdrop-blur-[2px]",
-            "shadow-[0_8px_32px_0_oklch(0.55_0.22_290_/_12%)]"
-          )}
+    <section className="h-screen p-4 md:p-6">
+      <div className="relative h-full overflow-hidden rounded-2xl bg-[#101010] md:rounded-[2rem]">
+        {/* Background video */}
+        <video
+          src={HERO_VIDEO}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 h-full w-full object-cover"
         />
-      </motion.div>
-    </motion.div>
-  );
-}
+        <div className="noise-overlay pointer-events-none absolute inset-0 opacity-70 mix-blend-overlay" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
 
-/* ---------- Scroll reveal wrapper ---------- */
+        {/* Hanging navbar pill */}
+        <nav className="absolute left-1/2 top-0 z-20 -translate-x-1/2">
+          <div className="flex items-center gap-3 rounded-b-2xl bg-black px-4 py-2 sm:gap-6 md:gap-12 md:rounded-b-3xl md:px-8 lg:gap-14">
+            {[
+              { label: "The loop", href: "#loop" },
+              { label: "Features", href: "#features" },
+              { label: "Live app", href: "/study" },
+              { label: "GitHub", href: "https://github.com/saxdy7/studyloop" },
+            ].map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="font-display text-[10px] transition-colors sm:text-xs md:text-sm"
+                style={{ color: "rgba(225, 224, 204, 0.8)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = CREAM)}
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.color = "rgba(225, 224, 204, 0.8)")
+                }
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
 
-function Reveal({
-  children,
-  delay = 0,
-  className,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-  className?: string;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.7, delay, ease: [0.25, 0.4, 0.25, 1] }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-/* ---------- Product preview card ---------- */
-
-function ProductPreview() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.94, y: 24 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.9, delay: 0.7, ease: [0.25, 0.4, 0.25, 1] }}
-      className="relative mx-auto w-full max-w-md"
-    >
-      <div className="float-slow">
-        <Card className="border-primary/20 bg-card/80 shadow-2xl shadow-primary/10 backdrop-blur">
-          <CardContent className="space-y-4 pt-6">
-            <div className="flex items-center justify-between">
-              <Badge variant="secondary">Photosynthesis</Badge>
-              <span className="text-xs text-muted-foreground">
-                Round 2 · Q3 of 6
-              </span>
-            </div>
-            <p className="text-sm font-medium leading-snug">
-              Where do the light-dependent reactions take place?
-            </p>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between rounded-lg border border-green-500/50 bg-green-500/10 px-3 py-2 text-xs">
-                <span>Thylakoid membranes</span>
-                <Check className="size-3.5 text-green-500" />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs opacity-80">
-                <span>Stroma</span>
-                <X className="size-3.5 text-red-500" />
-              </div>
-              <div className="rounded-lg border px-3 py-2 text-xs opacity-50">
-                Mitochondrial matrix
-              </div>
-            </div>
-            <div className="space-y-2 rounded-lg bg-muted/40 p-3">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="flex items-center gap-1.5">
-                  Calvin cycle
-                  <Badge
-                    variant="destructive"
-                    className="px-1.5 py-0 text-[9px]"
-                  >
-                    Needs work
-                  </Badge>
+        {/* Bottom-aligned hero content */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-6 sm:px-8 md:px-10 md:pb-10">
+          <div className="grid grid-cols-12 items-end gap-4">
+            <h1
+              className="font-display col-span-12 select-none font-medium leading-[0.85] tracking-[-0.07em] lg:col-span-8"
+              style={{ color: CREAM }}
+            >
+              <span className="relative inline-block text-[17vw] sm:text-[16vw] lg:text-[13vw]">
+                <WordsPullUp text="StudyLoop" />
+                <span className="absolute -right-[0.35em] top-[0.12em] text-[0.28em]">
+                  *
                 </span>
-                <span className="text-muted-foreground">2/5</span>
-              </div>
-              <Progress value={40} />
-              <div className="flex items-center justify-between text-[11px]">
-                <span>Light reactions</span>
-                <span className="text-muted-foreground">4/4</span>
-              </div>
-              <Progress value={100} />
+              </span>
+            </h1>
+
+            <div className="col-span-12 flex flex-col gap-4 pb-2 lg:col-span-4">
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="font-display text-xs leading-[1.2] sm:text-sm md:text-base"
+                style={{ color: "rgba(225, 224, 204, 0.7)" }}
+              >
+                An agentic study coach that turns your messy lecture notes into
+                a quiz, remembers every topic you get wrong, and keeps
+                re-testing your weak spots — harder each round — until the
+                material actually sticks.
+              </motion.p>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <Link
+                  href="/study"
+                  className="group inline-flex w-fit items-center gap-2 rounded-full py-1.5 pl-5 pr-1.5 font-display text-sm font-medium text-black transition-all hover:gap-3 sm:text-base"
+                  style={{ backgroundColor: CREAM }}
+                >
+                  Start the loop
+                  <span className="flex size-9 items-center justify-center rounded-full bg-black transition-transform group-hover:scale-110 sm:size-10">
+                    <ArrowRight className="size-4" style={{ color: CREAM }} />
+                  </span>
+                </Link>
+              </motion.div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
-    </motion.div>
+    </section>
   );
 }
 
-/* ---------- Subject marquee ---------- */
+/* ------------------------------------------------------------------ */
+/* App mockup section                                                  */
+/* ------------------------------------------------------------------ */
 
-const subjects = [
-  "Organic Chemistry",
-  "Data Structures",
-  "Microeconomics",
-  "Human Anatomy",
-  "Operating Systems",
-  "Constitutional Law",
-  "Thermodynamics",
-  "Machine Learning",
-  "Cell Biology",
-  "Linear Algebra",
-  "World History",
-  "Pharmacology",
-];
+function MockupSection() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-120px" });
 
-function SubjectMarquee() {
-  const row = [...subjects, ...subjects];
   return (
-    <div className="marquee-mask relative w-full overflow-hidden py-2">
-      <div className="marquee-track flex w-max gap-3">
-        {row.map((s, i) => (
-          <span
-            key={`${s}-${i}`}
-            className="whitespace-nowrap rounded-full border bg-card/60 px-4 py-1.5 text-xs text-muted-foreground"
-          >
-            {s}
-          </span>
-        ))}
+    <section id="loop" className="bg-black px-5 py-20 sm:px-8 md:py-28">
+      <div className="mx-auto max-w-4xl text-center">
+        <p className="font-display text-[10px] tracking-widest sm:text-xs" style={{ color: CREAM }}>
+          THE LOOP, LIVE
+        </p>
+        <h2 className="font-display mt-4 text-xl font-normal sm:text-2xl md:text-3xl lg:text-4xl">
+          <WordsPullUpMultiStyle
+            segments={[
+              { text: "Every answer you get wrong", className: "text-[#E1E0CC]" },
+              { text: "becomes your next quiz.", className: "text-gray-500" },
+            ]}
+          />
+        </h2>
+        <p className="font-display mx-auto mt-4 max-w-md text-xs text-gray-500 sm:text-sm">
+          The numbers below are live from the database — every session, round,
+          and answer, persisted in real time.
+        </p>
       </div>
-    </div>
+      <motion.div
+        ref={ref}
+        initial={{ opacity: 0, y: 64, scale: 0.97 }}
+        animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
+        transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+        className="mx-auto mt-12 w-[95%] max-w-4xl sm:w-[88%]"
+      >
+        <AppMockup />
+      </motion.div>
+    </section>
   );
 }
 
-/* ---------- Page data ---------- */
+/* ------------------------------------------------------------------ */
+/* About                                                               */
+/* ------------------------------------------------------------------ */
 
-const steps = [
-  {
-    icon: FileUp,
-    title: "Drop your messy notes",
-    text: "Upload a lecture PDF or paste raw notes — no formatting, no cleanup.",
-  },
-  {
-    icon: BrainCircuit,
-    title: "Get a plan + quiz",
-    text: "The agent extracts key topics and writes questions that test understanding, not recall.",
-  },
-  {
-    icon: Target,
-    title: "It hunts your weak spots",
-    text: "Every answer is tracked per topic. Below 80% mastery? Flagged and remembered.",
-  },
-  {
-    icon: Repeat2,
-    title: "Re-test until it sticks",
-    text: "One click builds a harder round focused only on what you got wrong.",
-  },
-];
+function About() {
+  return (
+    <section className="bg-black px-4 py-16 sm:px-6 md:py-24">
+      <div className="mx-auto max-w-6xl rounded-2xl bg-[#101010] px-6 py-16 text-center sm:px-10 md:py-24">
+        <p className="font-display text-[10px] tracking-widest sm:text-xs" style={{ color: CREAM }}>
+          WHY IT EXISTS
+        </p>
+        <h2 className="font-display mx-auto mt-6 max-w-3xl text-3xl font-normal leading-[0.95] sm:text-4xl sm:leading-[0.9] md:text-5xl lg:text-6xl">
+          <WordsPullUpMultiStyle
+            segments={[
+              { text: "Re-reading feels", className: "text-[#E1E0CC]" },
+              { text: "productive.", className: "font-serif-accent text-[#E1E0CC]" },
+              { text: "It isn't.", className: "text-[#E1E0CC]" },
+            ]}
+          />
+        </h2>
+        <div className="mx-auto mt-10 max-w-2xl">
+          <ScrollRevealText
+            className="font-display text-xs leading-relaxed text-[#DEDBC8] sm:text-sm md:text-base"
+            text="Passive review is one of the weakest ways to learn — yet it's what almost every student defaults to the night before an exam. Active recall and spaced re-testing are proven to work, but building your own quizzes and tracking your own weak areas by hand is so tedious that nobody does it. StudyLoop makes the effective method the effortless one: an agent builds the quiz, a database remembers every mistake, and the loop keeps closing until mastery."
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
 
-const features = [
-  {
-    icon: ListChecks,
-    title: "Not another quiz generator",
-    text: "Generic tools quiz you once and forget. StudyLoop remembers every mistake across rounds and closes the loop.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Mastery you can see",
-    text: "Per-topic progress bars build up round after round — you always know exactly what still needs work.",
-  },
-  {
-    icon: Database,
-    title: "Progress that persists",
-    text: "Every session and round is stored in a real-time database. Close the tab, come back tomorrow — the loop remembers.",
-  },
-];
+/* ------------------------------------------------------------------ */
+/* Features                                                            */
+/* ------------------------------------------------------------------ */
 
-const stack = [
-  { icon: Zap, label: "Groq · Llama 3.3 70B", role: "agent reasoning" },
-  { icon: Database, label: "Convex", role: "real-time database" },
-  { icon: Repeat2, label: "Lemma", role: "pod data layer" },
-  { icon: Sparkles, label: "Next.js 16", role: "app runtime" },
-];
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 26 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.8, delay: 0.15 + i * 0.15, ease: [0.25, 0.4, 0.25, 1] as const },
-  }),
+type FeatureCard = {
+  number: string;
+  title: string;
+  items: string[];
 };
 
-/* ---------- Landing ---------- */
+const featureCards: FeatureCard[] = [
+  {
+    number: "01",
+    title: "Instant Study Plan.",
+    items: [
+      "Drop a lecture PDF or paste raw notes",
+      "Agent extracts 3–6 key topics",
+      "One-line summary per topic",
+      "Ready in under a minute",
+    ],
+  },
+  {
+    number: "02",
+    title: "Adaptive Quizzing.",
+    items: [
+      "MCQs that test understanding, not recall",
+      "Instant feedback with explanations",
+      "Re-tests get harder each round",
+    ],
+  },
+  {
+    number: "03",
+    title: "Weak-Spot Memory.",
+    items: [
+      "Per-topic mastery tracked across rounds",
+      "Everything persisted to a real-time DB",
+      "Loop continues until 80%+ mastery",
+    ],
+  },
+];
+
+function Features() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <section id="features" className="relative min-h-screen bg-black px-4 py-16 sm:px-6 md:py-24">
+      <div className="bg-noise pointer-events-none absolute inset-0 opacity-[0.15]" />
+      <div className="relative mx-auto max-w-6xl">
+        <div className="mb-12 text-center md:mb-16">
+          <h2 className="font-display text-xl font-normal sm:text-2xl md:text-3xl lg:text-4xl">
+            <WordsPullUpMultiStyle
+              segments={[
+                { text: "A complete study loop for serious learners.", className: "text-[#E1E0CC]" },
+              ]}
+            />
+          </h2>
+          <h3 className="font-display mt-2 text-xl font-normal text-gray-500 sm:text-2xl md:text-3xl lg:text-4xl">
+            <WordsPullUpMultiStyle
+              segments={[{ text: "Built for mastery. Powered by agents.", className: "" }]}
+            />
+          </h3>
+        </div>
+
+        <div ref={ref} className="grid gap-3 sm:grid-cols-2 sm:gap-2 lg:h-[480px] lg:grid-cols-4 lg:gap-1">
+          {/* Video card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={inView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="relative min-h-64 overflow-hidden rounded-xl"
+          >
+            <video
+              src={CARD_VIDEO}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+            <p
+              className="font-display absolute bottom-4 left-4 text-lg font-medium"
+              style={{ color: CREAM }}
+            >
+              Your revision engine.
+            </p>
+          </motion.div>
+
+          {/* Numbered cards */}
+          {featureCards.map((card, i) => (
+            <motion.div
+              key={card.number}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={inView ? { opacity: 1, scale: 1 } : {}}
+              transition={{
+                duration: 0.8,
+                delay: (i + 1) * 0.15,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="flex flex-col rounded-xl bg-[#212121] p-5"
+            >
+              <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-white/5 sm:size-12">
+                <span className="font-display text-xs text-gray-500">{card.number}</span>
+              </div>
+              <h4 className="font-display mb-4 text-lg font-medium" style={{ color: CREAM }}>
+                {card.title}{" "}
+                <span className="text-gray-600">({card.number})</span>
+              </h4>
+              <ul className="flex-1 space-y-3">
+                {card.items.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5">
+                    <Check className="mt-0.5 size-4 shrink-0" style={{ color: CREAM }} />
+                    <span className="font-display text-xs text-gray-400 sm:text-sm">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/study"
+                className="group mt-5 inline-flex items-center gap-1.5 font-display text-sm"
+                style={{ color: CREAM }}
+              >
+                Try it now
+                <ArrowRight className="size-4 -rotate-45 transition-transform group-hover:rotate-0" />
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* CTA + Footer                                                        */
+/* ------------------------------------------------------------------ */
+
+function Footer() {
+  return (
+    <footer className="bg-black px-5 pb-8 pt-4 sm:px-8">
+      <div className="mx-auto max-w-6xl rounded-2xl bg-[#101010] px-6 py-14 text-center sm:px-10">
+        <h2 className="font-display text-2xl font-normal sm:text-3xl md:text-4xl" style={{ color: CREAM }}>
+          <WordsPullUp text="Your next exam won't study for itself." />
+        </h2>
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="/study"
+            className="group inline-flex items-center gap-2 rounded-full py-1.5 pl-5 pr-1.5 font-display text-sm font-medium text-black transition-all hover:gap-3 sm:text-base"
+            style={{ backgroundColor: CREAM }}
+          >
+            Start the loop
+            <span className="flex size-9 items-center justify-center rounded-full bg-black transition-transform group-hover:scale-110 sm:size-10">
+              <ArrowRight className="size-4" style={{ color: CREAM }} />
+            </span>
+          </Link>
+        </div>
+      </div>
+      <div className="mx-auto mt-6 flex max-w-6xl items-center justify-between px-2 text-[11px] text-gray-500">
+        <span className="font-display">
+          StudyLoop<span style={{ color: CREAM }}>*</span> — Gappy AI &ldquo;Ship to Get
+          Hired&rdquo; 2026
+        </span>
+        <Link
+          href="https://github.com/saxdy7/studyloop"
+          className="flex items-center gap-1.5 transition-colors hover:text-gray-300"
+        >
+          <Code2 className="size-3.5" /> Source
+        </Link>
+      </div>
+    </footer>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 
 export function Landing() {
   return (
-    <main className="relative flex-1 overflow-hidden">
-      <div className="hero-glow" />
-      <div className="grid-bg absolute inset-x-0 top-0 h-[640px]" />
-
-      {/* Floating shapes */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[720px] overflow-hidden">
-        <FloatingShape
-          delay={0.3}
-          width={520}
-          height={120}
-          rotate={12}
-          gradient="from-primary/20"
-          className="left-[-8%] top-[16%]"
-        />
-        <FloatingShape
-          delay={0.5}
-          width={420}
-          height={100}
-          rotate={-14}
-          gradient="from-cyan-500/15"
-          className="right-[-4%] top-[62%]"
-        />
-        <FloatingShape
-          delay={0.6}
-          width={220}
-          height={60}
-          rotate={18}
-          gradient="from-fuchsia-500/15"
-          className="right-[12%] top-[8%]"
-        />
-        <FloatingShape
-          delay={0.7}
-          width={160}
-          height={44}
-          rotate={-22}
-          gradient="from-violet-400/15"
-          className="left-[16%] top-[70%]"
-        />
-      </div>
-
-      {/* Nav */}
-      <motion.nav
-        initial={{ opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5"
-      >
-        <div className="flex items-center gap-2 font-semibold tracking-tight">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-primary/15">
-            <Repeat2 className="size-4 text-primary" />
-          </div>
-          StudyLoop
-        </div>
-        <Button size="sm" render={<Link href="/study" />}>
-          Start studying <ArrowRight className="size-4" />
-        </Button>
-      </motion.nav>
-
-      {/* Hero */}
-      <section className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-12 px-6 pb-16 pt-14 lg:grid-cols-2">
-        <div className="flex flex-col items-start gap-6">
-          <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-            <Badge variant="secondary" className="gap-1.5 border-primary/20">
-              <Sparkles className="size-3.5 text-primary" />
-              Agentic study coach — Ship to Get Hired 2026
-            </Badge>
-          </motion.div>
-          <motion.h1
-            custom={1}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            className="text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl"
-          >
-            <span className="bg-gradient-to-b from-white to-white/70 bg-clip-text text-transparent">
-              Stop re-reading.
-            </span>
-            <br />
-            <span className="gradient-text">Start re-testing.</span>
-          </motion.h1>
-          <motion.p
-            custom={2}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            className="max-w-lg text-balance text-muted-foreground"
-          >
-            StudyLoop turns messy lecture notes into a personalized quiz,
-            tracks exactly which topics you get wrong, and keeps re-testing
-            them — harder each round — until you actually know the material.
-          </motion.p>
-          <motion.div
-            custom={3}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            className="flex flex-col gap-3 sm:flex-row"
-          >
-            <Button
-              size="lg"
-              className="group shadow-lg shadow-primary/25"
-              render={<Link href="/study" />}
-            >
-              Upload your notes
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-            <Button size="lg" variant="outline" render={<Link href="#how-it-works" />}>
-              See the loop
-            </Button>
-          </motion.div>
-          <motion.p
-            custom={4}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            className="text-xs text-muted-foreground"
-          >
-            Free · no account needed · works with any lecture PDF
-          </motion.p>
-        </div>
-        <ProductPreview />
-      </section>
-
-      {/* Subject marquee */}
-      <section className="relative z-10 mx-auto w-full max-w-5xl px-6 pb-14">
-        <Reveal>
-          <p className="mb-3 text-center text-[11px] uppercase tracking-widest text-muted-foreground">
-            Works with any subject
-          </p>
-          <SubjectMarquee />
-        </Reveal>
-      </section>
-
-      {/* Live stats */}
-      <section className="relative z-10 mx-auto flex w-full max-w-6xl justify-center px-6 pb-20">
-        <Reveal className="flex w-full justify-center">
-          <LiveStats />
-        </Reveal>
-      </section>
-
-      {/* How it works */}
-      <section id="how-it-works" className="relative z-10 mx-auto w-full max-w-6xl px-6 py-20">
-        <Reveal className="mb-12 text-center">
-          <Badge variant="secondary" className="mb-3">How it works</Badge>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            The loop that makes it stick
-          </h2>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Four steps, fully automatic — you just answer questions.
-          </p>
-        </Reveal>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((step, i) => (
-            <Reveal key={step.title} delay={i * 0.1}>
-              <Card className="card-hover relative h-full bg-card/60">
-                <CardContent className="space-y-3 pt-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex size-10 items-center justify-center rounded-xl bg-primary/15">
-                      <step.icon className="size-5 text-primary" />
-                    </div>
-                    <span className="text-4xl font-bold text-primary/15">
-                      {i + 1}
-                    </span>
-                  </div>
-                  <h3 className="font-semibold">{step.title}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {step.text}
-                  </p>
-                </CardContent>
-              </Card>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* Why */}
-      <section className="relative z-10 mx-auto w-full max-w-6xl px-6 py-20">
-        <Reveal className="mb-12 text-center">
-          <Badge variant="secondary" className="mb-3">Why StudyLoop</Badge>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Built to close the loop, not just open it
-          </h2>
-        </Reveal>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {features.map((f, i) => (
-            <Reveal key={f.title} delay={i * 0.12}>
-              <Card className="card-hover h-full bg-card/60">
-                <CardContent className="space-y-3 pt-6">
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-primary/15">
-                    <f.icon className="size-5 text-primary" />
-                  </div>
-                  <h3 className="font-semibold">{f.title}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {f.text}
-                  </p>
-                </CardContent>
-              </Card>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* Stack strip */}
-      <section className="relative z-10 mx-auto w-full max-w-6xl px-6 py-10">
-        <Reveal>
-          <div className="grid gap-3 rounded-2xl border bg-card/40 p-6 backdrop-blur sm:grid-cols-4">
-            {stack.map((s) => (
-              <div key={s.label} className="flex items-center gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                  <s.icon className="size-4 text-primary" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium">{s.label}</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {s.role}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Reveal>
-      </section>
-
-      {/* CTA */}
-      <section className="relative z-10 mx-auto w-full max-w-3xl px-6 py-24">
-        <Reveal>
-          <Card className="border-primary/25 bg-gradient-to-b from-primary/10 to-transparent">
-            <CardContent className="flex flex-col items-center gap-5 py-12 text-center">
-              <h2 className="text-3xl font-bold tracking-tight">
-                Your next exam won&apos;t study for itself.
-              </h2>
-              <p className="max-w-md text-sm text-muted-foreground">
-                Paste today&apos;s lecture notes and find your weak spots in
-                under a minute.
-              </p>
-              <Button
-                size="lg"
-                className="group shadow-lg shadow-primary/25"
-                render={<Link href="/study" />}
-              >
-                Start the loop
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </CardContent>
-          </Card>
-        </Reveal>
-      </section>
-
-      {/* Footer */}
-      <footer className="relative z-10 border-t">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <Repeat2 className="size-3.5" /> StudyLoop
-          </span>
-          <span>Built for the Gappy AI &ldquo;Ship to Get Hired&rdquo; hackathon</span>
-        </div>
-      </footer>
+    <main className="flex-1 bg-black">
+      <Hero />
+      <MockupSection />
+      <About />
+      <Features />
+      <Footer />
     </main>
   );
 }
