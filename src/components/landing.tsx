@@ -3,7 +3,19 @@
 import Link from "next/link";
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { ArrowRight, Check, Code2 } from "lucide-react";
+import {
+  ArrowRight,
+  BrainCircuit,
+  Check,
+  Code2,
+  Database,
+  FileUp,
+  Repeat2 as RepeatIcon,
+  Sparkles,
+  Target,
+  X,
+  Zap,
+} from "lucide-react";
 import { AppMockup } from "@/components/landing/app-mockup";
 import { ScrollRevealText } from "@/components/landing/scroll-reveal-text";
 import {
@@ -359,14 +371,282 @@ function Footer() {
 }
 
 /* ------------------------------------------------------------------ */
+/* How it works (numbered timeline)                                    */
+/* ------------------------------------------------------------------ */
+
+const howSteps = [
+  {
+    icon: FileUp,
+    title: "Drop your notes",
+    text: "Upload a lecture PDF or paste raw text. No cleanup, no formatting — the agent reads the mess.",
+  },
+  {
+    icon: BrainCircuit,
+    title: "Get a plan + quiz",
+    text: "It extracts the key topics and writes multiple-choice questions that test whether you actually understand them.",
+  },
+  {
+    icon: Target,
+    title: "Find your weak spots",
+    text: "Every answer is scored per topic. Anything under 80% mastery is flagged — and remembered.",
+  },
+  {
+    icon: RepeatIcon,
+    title: "Re-test until it sticks",
+    text: "One tap builds a fresh round focused only on your weak topics, a little harder each time.",
+  },
+];
+
+function HowItWorks() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <section className="bg-black px-4 py-20 sm:px-6 md:py-28">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-14 text-center">
+          <p className="font-display text-[10px] tracking-widest sm:text-xs" style={{ color: CREAM }}>
+            HOW IT WORKS
+          </p>
+          <h2 className="font-display mt-4 text-2xl font-normal sm:text-3xl md:text-4xl">
+            <WordsPullUpMultiStyle
+              segments={[
+                { text: "Four steps.", className: "text-[#E1E0CC]" },
+                { text: "One closing loop.", className: "text-gray-500" },
+              ]}
+            />
+          </h2>
+        </div>
+
+        <div ref={ref} className="grid gap-3 md:grid-cols-4">
+          {howSteps.map((step, i) => (
+            <motion.div
+              key={step.title}
+              initial={{ opacity: 0, y: 28 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.7, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+              className="relative rounded-2xl bg-[#101010] p-6"
+            >
+              <div className="mb-5 flex items-center justify-between">
+                <div className="flex size-11 items-center justify-center rounded-xl bg-white/5">
+                  <step.icon className="size-5" style={{ color: CREAM }} />
+                </div>
+                <span className="font-display text-3xl font-medium text-white/10">
+                  0{i + 1}
+                </span>
+              </div>
+              <h3 className="font-display mb-2 text-lg" style={{ color: CREAM }}>
+                {step.title}
+              </h3>
+              <p className="font-display text-xs leading-relaxed text-gray-400 sm:text-sm">
+                {step.text}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Comparison                                                          */
+/* ------------------------------------------------------------------ */
+
+const oldWay = [
+  "Re-read the same notes and highlight",
+  "Feels productive, forgotten in days",
+  "No idea which topics are actually weak",
+  "Study everything equally, every time",
+  "Nothing carries over to next session",
+];
+
+const loopWay = [
+  "Active recall through targeted quizzing",
+  "Spaced re-testing locks knowledge in",
+  "Per-topic mastery tracked automatically",
+  "Time spent only where you're weak",
+  "Progress saved to your account, always",
+];
+
+function Comparison() {
+  return (
+    <section className="bg-black px-4 py-20 sm:px-6 md:py-24">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-12 text-center">
+          <p className="font-display text-[10px] tracking-widest sm:text-xs" style={{ color: CREAM }}>
+            THE DIFFERENCE
+          </p>
+          <h2 className="font-display mt-4 text-2xl font-normal sm:text-3xl md:text-4xl">
+            <WordsPullUpMultiStyle
+              segments={[
+                { text: "Same hour of studying.", className: "text-[#E1E0CC]" },
+                { text: "Very different result.", className: "text-gray-500" },
+              ]}
+            />
+          </h2>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-white/5 bg-[#101010] p-6 sm:p-8">
+            <p className="font-display mb-5 text-sm text-gray-500">The old way</p>
+            <ul className="space-y-3.5">
+              {oldWay.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-white/5">
+                    <X className="size-3 text-gray-500" />
+                  </span>
+                  <span className="font-display text-xs text-gray-500 sm:text-sm">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div
+            className="rounded-2xl border p-6 sm:p-8"
+            style={{ borderColor: "rgba(225,224,204,0.25)", backgroundColor: "#141310" }}
+          >
+            <p className="font-display mb-5 flex items-center gap-2 text-sm" style={{ color: CREAM }}>
+              <RepeatIcon className="size-4" /> The StudyLoop way
+            </p>
+            <ul className="space-y-3.5">
+              {loopWay.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <span
+                    className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: "rgba(225,224,204,0.15)" }}
+                  >
+                    <Check className="size-3" style={{ color: CREAM }} />
+                  </span>
+                  <span className="font-display text-xs sm:text-sm" style={{ color: "#DEDBC8" }}>
+                    {item}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Tech stack strip                                                    */
+/* ------------------------------------------------------------------ */
+
+const techStack = [
+  { icon: Zap, label: "Groq · Llama 3.3 70B", role: "Agent reasoning" },
+  { icon: Database, label: "Convex", role: "Real-time database" },
+  { icon: RepeatIcon, label: "Lemma", role: "Pod data layer" },
+  { icon: Sparkles, label: "Next.js 16", role: "App runtime" },
+];
+
+function TechStack() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  return (
+    <section className="bg-black px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-5xl">
+        <p className="mb-6 text-center font-display text-[10px] uppercase tracking-widest text-gray-500">
+          Built on
+        </p>
+        <div ref={ref} className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {techStack.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="flex items-center gap-3 rounded-xl border border-white/5 bg-[#101010] px-4 py-3.5"
+            >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/5">
+                <s.icon className="size-4" style={{ color: CREAM }} />
+              </div>
+              <div className="min-w-0">
+                <div className="font-display truncate text-xs font-medium text-white sm:text-sm">
+                  {s.label}
+                </div>
+                <div className="font-display text-[10px] text-gray-500">{s.role}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* FAQ                                                                 */
+/* ------------------------------------------------------------------ */
+
+const faqs = [
+  {
+    q: "Do I need an account?",
+    a: "Yes — sign in with Google or an email in seconds. Your sessions, quiz history, and weak spots are saved to your account so you can pick the loop back up on any device.",
+  },
+  {
+    q: "What can I feed it?",
+    a: "Any text-based lecture PDF, or just paste raw notes. Slides, textbook chapters, your own scribbles — the agent pulls out the topics regardless of how messy they are.",
+  },
+  {
+    q: "How does it find my weak spots?",
+    a: "It scores every question by topic and tracks your mastery across rounds. Any topic under 80% is flagged as weak, and each re-test focuses only on those — a little harder every time.",
+  },
+  {
+    q: "Is my progress really saved?",
+    a: "Yes. Every session and round is stored in a real-time database keyed to your account, so nothing is lost when you close the tab.",
+  },
+  {
+    q: "How much does it cost?",
+    a: "It's free. Bring your notes and start looping.",
+  },
+];
+
+function FAQ() {
+  return (
+    <section className="bg-black px-4 py-20 sm:px-6 md:py-24">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-12 text-center">
+          <p className="font-display text-[10px] tracking-widest sm:text-xs" style={{ color: CREAM }}>
+            QUESTIONS
+          </p>
+          <h2 className="font-display mt-4 text-2xl font-normal sm:text-3xl md:text-4xl" style={{ color: CREAM }}>
+            <WordsPullUp text="Good to know" />
+          </h2>
+        </div>
+        <div className="space-y-3">
+          {faqs.map((item) => (
+            <div key={item.q} className="rounded-2xl border border-white/5 bg-[#101010] p-5 sm:p-6">
+              <h3 className="font-display mb-2 text-sm font-medium sm:text-base" style={{ color: CREAM }}>
+                {item.q}
+              </h3>
+              <p className="font-display text-xs leading-relaxed text-gray-400 sm:text-sm">
+                {item.a}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 
 export function Landing() {
   return (
     <main className="flex-1 bg-black">
       <Hero />
+      <HowItWorks />
       <MockupSection />
       <About />
+      <Comparison />
       <Features />
+      <TechStack />
+      <FAQ />
       <Footer />
     </main>
   );
