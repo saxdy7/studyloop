@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Loader2,
   LogOut,
+  MessageSquare,
   Repeat2,
   Sparkles,
   Target,
@@ -25,6 +26,7 @@ import { QuizRunner } from "./quiz-runner";
 import { ResultsView } from "./results-view";
 import { DashboardPage } from "./dashboard-page";
 import { ProfilePage } from "./profile-page";
+import { StudyChat } from "./study-chat";
 import {
   computeTopicStats,
   loadSession,
@@ -34,7 +36,7 @@ import {
 import type { AnswerMap, Question, Quiz, Session, Topic } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Stage = "loading" | "input" | "quiz" | "results" | "dashboard" | "profile";
+type Stage = "loading" | "input" | "quiz" | "results" | "dashboard" | "profile" | "chat";
 
 async function callGenerate(body: {
   text: string;
@@ -171,6 +173,8 @@ export function StudyApp() {
       if (!cancelled) {
         if (stageParam === "profile") {
           setStage("profile");
+        } else if (stageParam === "chat") {
+          setStage("chat");
         } else {
           setStage("dashboard");
         }
@@ -189,6 +193,17 @@ export function StudyApp() {
         setStage("results");
       } else {
         toast.info("That session has no completed rounds yet.");
+      }
+    } catch {
+      toast.error("Could not load that session.");
+    }
+  }
+
+  async function openSessionForChat(sessionId: string) {
+    try {
+      const data = await convex.query(api.study.getSession, { sessionId });
+      if (data) {
+        setSession(toSession(data));
       }
     } catch {
       toast.error("Could not load that session.");
@@ -360,6 +375,7 @@ export function StudyApp() {
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", action: () => setStage("dashboard"), active: stage === "dashboard" },
     { icon: FileUp, label: "Upload notes", action: handleReset, active: stage === "input" },
+    { icon: MessageSquare, label: "AI Study Chat", action: () => setStage("chat"), active: stage === "chat" },
     { icon: BrainCircuit, label: "Study plan", action: undefined, active: stage === "quiz" },
     { icon: Target, label: "Weak spots", action: undefined, active: stage === "results" },
   ];
@@ -556,6 +572,13 @@ export function StudyApp() {
           <ProfilePage
             embedded={true}
             onSelectSession={openSession}
+          />
+        ) : stage === "chat" ? (
+          <StudyChat
+            session={session}
+            sessions={recentSessions ? recentSessions.map(s => ({ id: s.sessionId, title: s.title, roundCount: s.roundCount })) : []}
+            onSelectSession={(s) => openSessionForChat(s.id)}
+            onBack={() => setStage("dashboard")}
           />
         ) : (
           <>

@@ -117,7 +117,7 @@ export function SourceInput({
                   <>
                     {/* Backdrop click overlay */}
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className="absolute right-0 mt-1.5 w-32 rounded-lg border border-white/10 bg-[#161616] p-1 shadow-xl z-50 animate-in fade-in slide-in-from-top-1 duration-100">
+                    <div className="absolute right-0 bottom-full mb-1.5 w-32 rounded-lg border border-white/10 bg-[#161616] p-1 shadow-xl z-50 animate-in fade-in slide-in-from-bottom-1 duration-100">
                       {[
                         { value: 5, label: "5" },
                         { value: 8, label: "8 (default)" },
