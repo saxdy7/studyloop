@@ -464,16 +464,22 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
   const initialInputRef = React.useRef("");
 
   const handleToggleChange = (value: string) => {
-    if (value === "search") {
+    if (value === "think") {
+      setShowThink((prev) => !prev);
+      setShowCanvas(false);
+      setShowSearch(false);
+    } else if (value === "search") {
       setShowSearch((prev) => !prev);
       setShowThink(false);
-    } else if (value === "think") {
-      setShowThink((prev) => !prev);
-      setShowSearch(false);
+      setShowCanvas(false);
     }
   };
 
-  const handleCanvasToggle = () => setShowCanvas((prev) => !prev);
+  const handleCanvasToggle = () => {
+    setShowCanvas((prev) => !prev);
+    setShowThink(false);
+    setShowSearch(false);
+  };
 
   const isImageFile = (file: File) => file.type.startsWith("image/");
 
