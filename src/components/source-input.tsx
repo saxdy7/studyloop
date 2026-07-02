@@ -11,10 +11,11 @@ export function SourceInput({
   onGenerate,
   busy,
 }: {
-  onGenerate: (text: string) => void;
+  onGenerate: (text: string, numQuestions: number) => void;
   busy: boolean;
 }) {
   const [text, setText] = useState("");
+  const [numQuestions, setNumQuestions] = useState(8);
   const [extracting, setExtracting] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -83,21 +84,42 @@ export function SourceInput({
           className="min-h-40 resize-y"
         />
 
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            {text.trim().length} characters
-          </span>
-          <Button onClick={() => onGenerate(text)} disabled={disabled}>
-            {busy ? (
-              <>
-                <Loader2 className="size-4 animate-spin" /> Building your study plan…
-              </>
-            ) : (
-              <>
-                <Sparkles className="size-4" /> Generate study plan & quiz
-              </>
-            )}
-          </Button>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              {text.trim().length} characters
+            </span>
+            <div className="flex items-center gap-2">
+              <label htmlFor="num-questions" className="whitespace-nowrap text-xs text-muted-foreground">
+                Questions:
+              </label>
+              <select
+                id="num-questions"
+                value={numQuestions}
+                onChange={(e) => setNumQuestions(Number(e.target.value))}
+                className="rounded-md border border-input bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value={5}>5</option>
+                <option value={8}>8 (default)</option>
+                <option value={10}>10</option>
+                <option value={15}>15</option>
+                <option value={20}>20</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => onGenerate(text, numQuestions)} disabled={disabled}>
+              {busy ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" /> Building your study plan…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="size-4" /> Generate {numQuestions} questions
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

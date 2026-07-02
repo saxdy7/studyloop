@@ -12,11 +12,15 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        "relative overflow-hidden group/card flex flex-col gap-(--card-spacing) rounded-xl bg-[#101010]/60 border border-white/5 py-(--card-spacing) text-sm text-card-foreground shadow-[inset_0_1px_1px_rgba(225,224,204,0.06),0_8px_20px_-8px_rgba(0,0,0,0.6)] [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl z-0",
         className
       )}
       {...props}
-    />
+    >
+      {/* Premium background top-right glow matching the landing page accent */}
+      <div className="absolute -right-20 -top-20 w-44 h-44 rounded-full bg-[radial-gradient(circle,rgba(225,224,204,0.12)_0%,transparent_70%)] blur-md pointer-events-none z-0" />
+      {props.children}
+    </div>
   )
 }
 

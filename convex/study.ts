@@ -166,3 +166,78 @@ export const stats = query({
     };
   },
 });
+
+export const deleteSession = mutation({
+  args: { sessionId: v.string() },
+  handler: async (ctx, { sessionId }) => {
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
+      .unique();
+    if (!session) return { deleted: 0 };
+    const rounds = await ctx.db
+      .query("rounds")
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
+      .collect();
+    for (const r of rounds) await ctx.db.delete(r._id);
+    await ctx.db.delete(session._id);
+    return { deleted: 1 + rounds.length };
+  },
+});
+
+export const analytics = query({
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx, { userId }) => {
+    const sessions = userId
+      ? await ctx.db
+          .query("sessions")
+          .withIndex("by_userId", (q) => q.eq("userId", userId))
+          .collect()
+      : await ctx.db.query("sessions").collect();
+    const sessionIds = sessions.map((s) => s.sessionId);
+    
+    const rounds = await ctx.db.query("rounds").collect();
+    const userRounds = rounds
+      .filter((r) => sessionIds.includes(r.sessionId))
+      .sort((a, b) => a.scoredAt - b.scoredAt);
+
+    const allWeakTopics = new Set<string>();
+    userRounds.forEach((r) => {
+      r.weakTopics.forEach((t) => allWeakTopics.add(t));
+    });
+
+    const latestRoundPerSession = new Map<string, typeof userRounds[0]>();
+    userRounds.forEach((r) => {
+      const existing = latestRoundPerSession.get(r.sessionId);
+      if (!existing || r.round > existing.round) {
+        latestRoundPerSession.set(r.sessionId, r);
+      }
+    });
+
+    const sessionAnalytics = sessions.map((s) => {
+      const latestRound = latestRoundPerSession.get(s.sessionId);
+      return {
+        sessionId: s.sessionId,
+        title: s.title,
+        roundCount: userRounds.filter((r) => r.sessionId === s.sessionId).length,
+        weakTopics: latestRound ? latestRound.weakTopics : [],
+        score: latestRound ? latestRound.score : 0,
+        total: latestRound ? latestRound.total : 0,
+      };
+    });
+
+    return {
+      weakTopics: Array.from(allWeakTopics),
+      rounds: userRounds.map((r) => ({
+        sessionId: r.sessionId,
+        round: r.round,
+        score: r.score,
+        total: r.total,
+        scoredAt: r.scoredAt,
+        weakTopics: r.weakTopics,
+      })),
+      sessionAnalytics,
+    };
+  },
+});
+

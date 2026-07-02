@@ -159,10 +159,148 @@ function MockupSection() {
         initial={{ opacity: 0, y: 64, scale: 0.97 }}
         animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
         transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-        className="mx-auto mt-12 w-[95%] max-w-4xl sm:w-[88%]"
+        className="relative mx-auto mt-12 w-[95%] max-w-4xl sm:w-[88%]"
       >
         <AppMockup />
+        {/* Smooth gradient fade overlay at the bottom to blend into the landing page */}
+        <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none" />
       </motion.div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Core Features                                                       */
+/* ------------------------------------------------------------------ */
+
+function CoreFeatures() {
+  return (
+    <section className="bg-black px-5 py-20 sm:px-8 md:py-28 text-center flex justify-center border-t border-white/5">
+      <div className="w-full max-w-[1100px] mx-auto">
+        {/* Header Block */}
+        <div className="mx-auto max-w-2xl text-center mb-12 sm:mb-16">
+          <span className="inline-block text-[10px] sm:text-xs font-semibold uppercase tracking-[2px] bg-gradient-to-r from-[#E1E0CC] via-[#A78BFA] to-[#F472B6] bg-clip-text text-transparent mb-4">
+            Core Features
+          </span>
+          <h2 className="font-display mt-2 text-2xl font-normal sm:text-3xl md:text-4xl text-[#E1E0CC] tracking-tight">
+            Built for Speed & Mastery
+          </h2>
+          <p className="font-display mx-auto mt-4 max-w-md text-xs leading-relaxed text-gray-500 sm:text-sm">
+            Everything you need to turn raw study notes <br />
+            into active recall loops.
+          </p>
+        </div>
+
+        {/* Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Card 1 — Smart Note Processing */}
+          <div className="relative h-[340px] flex flex-col justify-end overflow-hidden rounded-[20px] border border-white/5 bg-[#101010] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] text-left group">
+            {/* Top Radial Glow */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(225,224,204,0.12)_0%,rgba(225,224,204,0.03)_40%,transparent_70%)] pointer-events-none" />
+
+            {/* Prompt Box */}
+            <div className="absolute top-[30px] left-6 right-6 p-4 rounded-xl bg-[#161616] border border-white/5 shadow-lg text-[11px] leading-relaxed text-gray-400">
+              Photosynthesis: light-dependent reactions convert{" "}
+              <span className="font-semibold bg-gradient-to-r from-[#E1E0CC] to-[#A78BFA] bg-clip-text text-transparent">light energy</span> into{" "}
+              <span className="font-semibold bg-gradient-to-r from-[#E1E0CC] to-[#A78BFA] bg-clip-text text-transparent">chemical energy</span> inside the{" "}
+              <span className="font-semibold bg-gradient-to-r from-[#E1E0CC] to-[#A78BFA] bg-clip-text text-transparent">thylakoid membranes</span>.
+            </div>
+
+            {/* Identify weak spots pill button */}
+            <div className="absolute top-[180px] left-10 flex items-center gap-1.5 rounded-full border border-white/10 bg-[#1C1C1C] px-3.5 py-1.5 text-[10px] font-semibold text-[#E1E0CC] shadow-md">
+              <span className="text-purple-400 text-xs">✦</span>
+              Identify weak spots
+            </div>
+
+            {/* Cursor SVG */}
+            <svg
+              className="absolute top-[205px] left-[110px] size-6 drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)] z-10"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M4 2L20 11L11 13L9 22L4 2Z"
+                fill="#E1E0CC"
+                stroke="#101010"
+                strokeWidth="1.5"
+              />
+            </svg>
+
+            {/* Heading */}
+            <h3 className="relative z-10 p-6 text-sm font-semibold text-[#E1E0CC] tracking-wide">
+              Smart Note Processing
+            </h3>
+          </div>
+
+          {/* Card 2 — API Access */}
+          <div className="relative h-[340px] flex flex-col justify-end overflow-hidden rounded-[20px] border border-white/5 bg-[#101010] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] text-left group">
+            {/* Top Radial Glow */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(167,139,250,0.12)_0%,rgba(167,139,250,0.03)_40%,transparent_70%)] pointer-events-none" />
+
+            {/* API Visual */}
+            <div className="absolute inset-x-0 top-0 bottom-[70px] flex items-center justify-center px-6">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://pub-f170a2592d2c4a1485466404c36807be.r2.dev/viktor/network.svg"
+                alt="Network Sync"
+                className="h-[180px] w-full object-contain mt-5 opacity-80 filter brightness-110"
+              />
+            </div>
+
+            {/* Heading */}
+            <h3 className="relative z-10 p-6 text-sm font-semibold text-[#E1E0CC] tracking-wide">
+              Lemma Pod API Sync
+            </h3>
+          </div>
+
+          {/* Card 3 — Project Library */}
+          <div className="relative h-[340px] flex flex-col justify-end overflow-hidden rounded-[20px] border border-white/5 bg-[#101010] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] text-left group">
+            {/* Top Radial Glow */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(244,114,182,0.12)_0%,rgba(244,114,182,0.03)_40%,transparent_70%)] pointer-events-none" />
+
+            {/* Mesh Overlay */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)",
+                backgroundSize: "16px 16px",
+                WebkitMaskImage: "radial-gradient(circle at center top, black 0%, transparent 80%)",
+                maskImage: "radial-gradient(circle at center top, black 0%, transparent 80%)",
+              }}
+            />
+
+            {/* Folder Image */}
+            <div className="absolute top-[50px] left-1/2 -translate-x-1/2 w-[170px] drop-shadow-[0_15px_25px_rgba(0,0,0,0.4)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://pub-f170a2592d2c4a1485466404c36807be.r2.dev/viktor/library%20icon.svg"
+                alt="Folder icon"
+                className="w-full object-contain filter saturate-75 opacity-90"
+              />
+            </div>
+
+            {/* Search Pill */}
+            <div className="absolute top-[220px] left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full border border-white/10 bg-[#161616] px-4.5 py-1.5 text-[10px] text-[#E1E0CC] shadow-md whitespace-nowrap">
+              <svg
+                className="size-3.5 text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <span>Search in loops</span>
+            </div>
+
+            {/* Heading */}
+            <h3 className="relative z-10 p-6 text-sm font-semibold text-[#E1E0CC] tracking-wide">
+              Persistent Loop Library
+            </h3>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -681,6 +819,7 @@ export function Landing() {
       <Hero />
       <HowItWorks />
       <MockupSection />
+      <CoreFeatures />
       <About />
       <Comparison />
       <Features />
