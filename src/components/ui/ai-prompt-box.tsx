@@ -577,7 +577,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
 
           rec.onerror = (err: any) => {
             const errType = err.error || "unknown";
-            if (errType === "aborted") return;
+            if (errType === "aborted" || errType === "no-speech") return;
 
             console.error("Speech recognition error:", errType, err);
             if (errType === "not-allowed") {
