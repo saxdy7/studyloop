@@ -5,6 +5,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, FolderCode } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 // Utility function for className merging
 const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(" ");
@@ -459,6 +460,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
   const [showCanvas, setShowCanvas] = React.useState(false);
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const promptBoxRef = React.useRef<HTMLDivElement>(null);
+  const recognitionRef = React.useRef<any>(null);
 
   const handleToggleChange = (value: string) => {
     if (value === "search") {
@@ -549,12 +551,79 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
     }
   };
 
-  const handleStartRecording = () => console.log("Started recording");
+  const handleStartRecording = () => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const rec = new SpeechRecognition();
+          rec.continuous = true;
+          rec.interimResults = true;
+          rec.lang = "en-US";
+
+          rec.onresult = (e: any) => {
+            let finalResult = "";
+            for (let i = e.resultIndex; i < e.results.length; ++i) {
+              if (e.results[i].isFinal) {
+                finalResult += e.results[i][0].transcript;
+              }
+            }
+            if (finalResult) {
+              setInput((prev) => {
+                const clean = prev.trim();
+                return clean ? `${clean} ${finalResult.trim()}` : finalResult.trim();
+              });
+            }
+          };
+
+          rec.onerror = (err: any) => {
+            const errType = err.error || "unknown";
+            if (errType === "aborted") {
+              return;
+            }
+
+            console.error("Speech recognition error:", errType, err);
+            if (errType === "not-allowed") {
+              toast.error("Microphone access was denied. Please allow microphone permissions in your browser address bar.");
+            } else if (errType === "no-speech") {
+              console.warn("No speech detected.");
+            } else if (errType === "audio-capture") {
+              toast.error("No microphone detected. Please connect a microphone and try again.");
+            } else {
+              toast.error(`Speech recognition error: ${errType}`);
+            }
+
+            if (recognitionRef.current) {
+              try {
+                recognitionRef.current.abort();
+              } catch (e) {}
+              recognitionRef.current = null;
+            }
+            setIsRecording(false);
+          };
+
+          rec.start();
+          recognitionRef.current = rec;
+        } catch (err) {
+          console.error("Failed to start speech recognition:", err);
+          toast.error("Could not start microphone listener.");
+        }
+      } else {
+        toast.error("Speech recognition is not supported in this browser. Try Google Chrome or Microsoft Edge!");
+      }
+    }
+  };
 
   const handleStopRecording = (duration: number) => {
-    console.log(`Stopped recording after ${duration} seconds`);
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (err) {
+        console.error("Failed to stop recognition:", err);
+      }
+      recognitionRef.current = null;
+    }
     setIsRecording(false);
-    onSend(`[Voice message - ${duration} seconds]`, []);
   };
 
   const hasContent = input.trim() !== "" || files.length > 0;
