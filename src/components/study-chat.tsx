@@ -22,27 +22,36 @@ export function StudyChat({
   session: activeSession,
   sessions = [],
   onSelectSession,
+  onUpdateChat,
+  onGenerate,
   onBack,
 }: {
   session: any | null;
   sessions: ChatSessionItem[];
   onSelectSession: (session: ChatSessionItem) => void;
+  onUpdateChat: (sessionId: string, messages: Message[]) => void;
+  onGenerate: (text: string, numQuestions: number) => Promise<void>;
   onBack: () => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Initialize welcome message when active session changes
   useEffect(() => {
     if (activeSession) {
-      setMessages([
-        {
-          id: "welcome",
-          role: "assistant",
-          content: `Hi! I'm LoopBot, your StudyLoop assistant. I've loaded your notes for "${activeSession.title}". Ask me anything about them, or highlight key concepts you want to review!`,
-        },
-      ]);
+      if (activeSession.chatHistory && activeSession.chatHistory.length > 0) {
+        setMessages(activeSession.chatHistory);
+      } else {
+        setMessages([
+          {
+            id: "welcome",
+            role: "assistant",
+            content: `Hi! I'm LoopBot, your StudyLoop assistant. I've loaded your notes for "${activeSession.title}". Ask me anything about them, or highlight key concepts you want to review!`,
+          },
+        ]);
+      }
     } else {
       setMessages([
         {
@@ -68,16 +77,17 @@ export function StudyChat({
       content: text,
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const nextMessages = [...messages, userMsg];
+    setMessages(nextMessages);
+    onUpdateChat(activeSession.id, nextMessages);
     setLoading(true);
 
     try {
-      const chatHistory = [...messages, userMsg];
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: chatHistory.map((m) => ({ role: m.role, content: m.content })),
+          messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
           sourceText: activeSession.sourceText,
         }),
       });
@@ -85,23 +95,24 @@ export function StudyChat({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to get response");
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Math.random().toString(),
-          role: "assistant",
-          content: data.reply,
-        },
-      ]);
+      const assistantMsg: Message = {
+        id: Math.random().toString(),
+        role: "assistant",
+        content: data.reply,
+      };
+
+      const finalMessages = [...nextMessages, assistantMsg];
+      setMessages(finalMessages);
+      onUpdateChat(activeSession.id, finalMessages);
     } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Math.random().toString(),
-          role: "assistant",
-          content: "Sorry, I ran into an error generating that response. Please try again.",
-        },
-      ]);
+      const errorMsg: Message = {
+        id: Math.random().toString(),
+        role: "assistant",
+        content: "Sorry, I ran into an error generating that response. Please try again.",
+      };
+      const errorMessages = [...nextMessages, errorMsg];
+      setMessages(errorMessages);
+      onUpdateChat(activeSession.id, errorMessages);
     } finally {
       setLoading(false);
     }
@@ -183,9 +194,36 @@ export function StudyChat({
             </div>
 
             {activeSession && (
-              <div className="flex items-center gap-2 rounded-full border border-white/5 bg-[#101010]/60 px-3 py-1 text-[11px]" style={{ color: "#E1E0CC" }}>
-                <Sparkles className="size-3 text-purple-400 animate-pulse" />
-                <span>Context Loaded</span>
+              <div className="flex items-center gap-3">
+                {messages.length > 1 && (
+                  <button
+                    onClick={async () => {
+                      setGenerating(true);
+                      try {
+                        const chatText = messages
+                          .filter(m => m.id !== "welcome")
+                          .map((m) => `${m.role === "user" ? "Student Query" : "Tutor Explanation"}: ${m.content}`)
+                          .join("\n\n");
+                        await onGenerate(chatText, 8);
+                      } catch {
+                        setGenerating(false);
+                      }
+                    }}
+                    disabled={generating}
+                    className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {generating ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="size-3 text-amber-400" />
+                    )}
+                    <span>Turn Chat into Quiz</span>
+                  </button>
+                )}
+                <div className="flex items-center gap-2 rounded-full border border-white/5 bg-[#101010]/60 px-3 py-1 text-[11px]" style={{ color: "#E1E0CC" }}>
+                  <Sparkles className="size-3 text-purple-400 animate-pulse" />
+                  <span>Context Loaded</span>
+                </div>
               </div>
             )}
           </header>

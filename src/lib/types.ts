@@ -41,11 +41,18 @@ export type TopicStat = {
   weak: boolean;
 };
 
+export type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+};
+
 export type Session = {
   id: string;
   title: string;
   sourceText: string;
   topics: Topic[];
   rounds: RoundResult[];
+  chatHistory?: ChatMessage[];
   createdAt: number;
 };

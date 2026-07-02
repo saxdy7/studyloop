@@ -241,3 +241,27 @@ export const analytics = query({
   },
 });
 
+export const updateChatHistory = mutation({
+  args: {
+    sessionId: v.string(),
+    chatHistory: v.array(
+      v.object({
+        id: v.string(),
+        role: v.string(),
+        content: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("sessions")
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
+      .unique();
+    if (!existing) throw new Error("Session not found");
+    await ctx.db.patch(existing._id, {
+      chatHistory: args.chatHistory,
+    });
+    return existing._id;
+  },
+});
+

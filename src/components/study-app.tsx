@@ -33,7 +33,7 @@ import {
   saveSession,
   scoreRound,
 } from "@/lib/study";
-import type { AnswerMap, Question, Quiz, Session, Topic } from "@/lib/types";
+import type { AnswerMap, Question, Quiz, Session, Topic, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type Stage = "loading" | "input" | "quiz" | "results" | "dashboard" | "profile" | "chat";
@@ -83,6 +83,7 @@ type DbSessionData = {
     title: string;
     sourceText: string;
     topics: Topic[];
+    chatHistory?: { id: string; role: string; content: string }[];
     createdAt: number;
   };
   rounds: {
@@ -99,6 +100,11 @@ function toSession(data: DbSessionData): Session {
     title: data.session.title,
     sourceText: data.session.sourceText,
     topics: data.session.topics,
+    chatHistory: data.session.chatHistory?.map(c => ({
+      id: c.id,
+      role: c.role as "user" | "assistant",
+      content: c.content,
+    })),
     createdAt: data.session.createdAt,
     rounds: data.rounds.map((r) => ({
       round: r.round,
@@ -126,6 +132,7 @@ export function StudyApp() {
   const upsertSession = useMutation(api.study.upsertSession);
   const saveRound = useMutation(api.study.saveRound);
   const deleteSessionMutation = useMutation(api.study.deleteSession);
+  const updateChatHistoryMutation = useMutation(api.study.updateChatHistory);
   const stats = useQuery(api.study.stats, user ? { userId: user.uid } : "skip");
   const recentSessions = useQuery(
     api.study.listSessions,
@@ -207,6 +214,25 @@ export function StudyApp() {
       }
     } catch {
       toast.error("Could not load that session.");
+    }
+  }
+
+  async function handleUpdateChatHistory(sessionId: string, updatedMessages: ChatMessage[]) {
+    // Update local state first
+    setSession((prev) =>
+      prev && prev.id === sessionId ? { ...prev, chatHistory: updatedMessages } : prev
+    );
+    try {
+      await updateChatHistoryMutation({
+        sessionId,
+        chatHistory: updatedMessages.map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+        })),
+      });
+    } catch (err) {
+      console.error("Failed to persist chat history:", err);
     }
   }
 
@@ -578,6 +604,8 @@ export function StudyApp() {
             session={session}
             sessions={recentSessions ? recentSessions.map(s => ({ id: s.sessionId, title: s.title, roundCount: s.roundCount })) : []}
             onSelectSession={(s) => openSessionForChat(s.id)}
+            onUpdateChat={handleUpdateChatHistory}
+            onGenerate={handleGenerate}
             onBack={() => setStage("dashboard")}
           />
         ) : (

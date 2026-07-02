@@ -14,6 +14,15 @@ export default defineSchema({
         summary: v.string(),
       })
     ),
+    chatHistory: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          role: v.string(),
+          content: v.string(),
+        })
+      )
+    ),
     createdAt: v.number(),
   })
     .index("by_sessionId", ["sessionId"])
