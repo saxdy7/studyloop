@@ -66,10 +66,10 @@ export async function POST(req: NextRequest) {
     // 4. Detect Canvas Toggle
     const isCanvas = lastMsg.startsWith("[Canvas: ");
 
-    // 2. Select model (use vision model if image is provided, deepseek-r1 for reasoning, fallback to llama-3.3)
+    // 2. Select model (use Llama 4 Scout vision model if image is provided, deepseek-r1 for reasoning, fallback to llama-3.3)
     let activeModel = "llama-3.3-70b-versatile";
     if (image) {
-      activeModel = "llama-3.2-11b-vision-preview";
+      activeModel = "meta-llama/llama-4-scout-17b-16e-instruct";
     } else if (needsThinking) {
       activeModel = "deepseek-r1-distill-llama-70b";
     } else if (process.env.GROQ_MODEL) {
@@ -100,27 +100,52 @@ ${needsThinking ? `- The user has requested deep reasoning. You MUST start your 
 ${isCanvas ? `- The user has requested Canvas mode. Focus on writing structured layouts, template documents, clean code modules, or SVG/Mermaid diagrams. Ensure code segments are clean, modular, and easy to copy-paste.` : ""}`;
 
     // Format messages for Groq API
-    const formattedMessages: any[] = [
-      { role: "system", content: systemPrompt }
-    ];
+    const formattedMessages: any[] = [];
 
-    // Map existing history messages
-    for (let i = 0; i < messages.length; i++) {
-      const m = messages[i];
-      const isLast = i === messages.length - 1;
+    if (needsThinking) {
+      // DeepSeek R1 does not support the "system" role, so prepend instructions to the user message
+      const firstUserIdx = messages.findIndex(m => m.role === "user");
+      const targetIdx = firstUserIdx !== -1 ? firstUserIdx : messages.length - 1;
 
-      // Handle user multi-modal input on the last message
-      if (isLast && m.role === "user") {
-        const contentBlock: any[] = [{ type: "text", text: m.content }];
-        if (image) {
-          contentBlock.push({
-            type: "image_url",
-            image_url: { url: image }
-          });
+      for (let i = 0; i < messages.length; i++) {
+        const m = messages[i];
+        const isLast = i === messages.length - 1;
+
+        if (i === targetIdx) {
+          const combinedPrompt = `INSTRUCTIONS & STUDY MATERIAL:\n${systemPrompt}\n\nSTUDENT QUESTION:\n${m.content}`;
+          formattedMessages.push({ role: "user", content: combinedPrompt });
+        } else if (isLast && m.role === "user") {
+          const contentBlock: any[] = [{ type: "text", text: m.content }];
+          if (image) {
+            contentBlock.push({
+              type: "image_url",
+              image_url: { url: image }
+            });
+          }
+          formattedMessages.push({ role: "user", content: contentBlock });
+        } else {
+          formattedMessages.push({ role: m.role, content: m.content });
         }
-        formattedMessages.push({ role: "user", content: contentBlock });
-      } else {
-        formattedMessages.push({ role: m.role, content: m.content });
+      }
+    } else {
+      // Standard OpenAI-compatible system prompt role format
+      formattedMessages.push({ role: "system", content: systemPrompt });
+      for (let i = 0; i < messages.length; i++) {
+        const m = messages[i];
+        const isLast = i === messages.length - 1;
+
+        if (isLast && m.role === "user") {
+          const contentBlock: any[] = [{ type: "text", text: m.content }];
+          if (image) {
+            contentBlock.push({
+              type: "image_url",
+              image_url: { url: image }
+            });
+          }
+          formattedMessages.push({ role: "user", content: contentBlock });
+        } else {
+          formattedMessages.push({ role: m.role, content: m.content });
+        }
       }
     }
 

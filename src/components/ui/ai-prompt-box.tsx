@@ -600,7 +600,15 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
           };
 
           rec.onend = () => {
-            setIsRecording(false);
+            if (recognitionRef.current === rec) {
+              try {
+                rec.start();
+              } catch (e) {
+                setIsRecording(false);
+              }
+            } else {
+              setIsRecording(false);
+            }
           };
 
           rec.start();
@@ -619,12 +627,13 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
 
   const handleStopRecording = (duration: number) => {
     if (recognitionRef.current) {
+      const rec = recognitionRef.current;
+      recognitionRef.current = null;
       try {
-        recognitionRef.current.stop();
+        rec.stop();
       } catch (err) {
         console.error("Failed to stop recognition:", err);
       }
-      recognitionRef.current = null;
     }
     setIsRecording(false);
   };

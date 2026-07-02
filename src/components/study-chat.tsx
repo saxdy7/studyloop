@@ -637,38 +637,80 @@ export function StudyChat({
                 >
                   Download File
                 </button>
-                {(activeCanvasContent.type === "pdf" || activeCanvasContent.type === "doc") && (
-                  <button
-                    onClick={() => {
-                      const printWindow = window.open("", "_blank");
-                      if (!printWindow) return;
-                      printWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>${activeCanvasContent.title}</title>
-                            <style>
-                              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; }
-                              h1, h2, h3 { color: #111111; }
-                              p, li { line-height: 1.6; color: #333333; }
-                            </style>
-                          </head>
-                          <body>
-                            ${activeCanvasContent.content
-                              .replace(/^# (.*)$/gm, "<h1>$1</h1>")
-                              .replace(/^## (.*)$/gm, "<h2>$1</h2>")
-                              .replace(/^### (.*)$/gm, "<h3>$1</h3>")
-                              .replace(/^- (.*)$/gm, "<li>$1</li>")}
-                            <script>window.onload = function() { window.print(); window.close(); }</script>
-                          </body>
-                        </html>
-                      `);
-                      printWindow.document.close();
-                    }}
-                    className="text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-2.5 py-1 font-medium transition-colors cursor-pointer"
-                  >
-                    Print / Export PDF
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    const printWindow = window.open("", "_blank");
+                    if (!printWindow) return;
+                    
+                    let printableHtml = "";
+                    if (activeCanvasContent.type === "pdf" || activeCanvasContent.type === "doc") {
+                      printableHtml = activeCanvasContent.content
+                        .replace(/^# (.*)$/gm, "<h1>$1</h1>")
+                        .replace(/^## (.*)$/gm, "<h2>$1</h2>")
+                        .replace(/^### (.*)$/gm, "<h3>$1</h3>")
+                        .replace(/^- (.*)$/gm, "<li>$1</li>");
+                    } else if (activeCanvasContent.type === "table") {
+                      const lines = activeCanvasContent.content.split("\n").map(l => l.trim()).filter(l => l.startsWith("|"));
+                      if (lines.length >= 2) {
+                        const headers = lines[0].split("|").map(h => h.trim()).filter(Boolean);
+                        const rows = lines.slice(2).map(line => line.split("|").map(c => c.trim()).filter(Boolean));
+                        printableHtml = `
+                          <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;">
+                            <thead>
+                              <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
+                                ${headers.map(h => `<th style="padding: 10px; text-align: left; border: 1px solid #ddd;">${h}</th>`).join("")}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${rows.map(row => `
+                                <tr style="border-bottom: 1px solid #eee;">
+                                  ${row.map(cell => `<td style="padding: 10px; border: 1px solid #ddd;">${cell}</td>`).join("")}
+                                </tr>
+                              `).join("")}
+                            </tbody>
+                          </table>
+                        `;
+                      } else {
+                        printableHtml = `<pre>${activeCanvasContent.content}</pre>`;
+                      }
+                    } else {
+                      printableHtml = `
+                        <h2 style="font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 8px;">${activeCanvasContent.title}</h2>
+                        <pre style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 13px; white-space: pre-wrap; margin-top: 20px;">${activeCanvasContent.content}</pre>
+                      `;
+                    }
+
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>${activeCanvasContent.title}</title>
+                          <style>
+                            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #111111; }
+                            h1 { font-size: 24px; border-bottom: 2px solid #111111; padding-bottom: 10px; margin-bottom: 30px; }
+                            h2 { font-size: 18px; margin-top: 25px; margin-bottom: 15px; }
+                            h3 { font-size: 15px; margin-top: 20px; margin-bottom: 10px; }
+                            p, li { line-height: 1.6; color: #333333; font-size: 14px; }
+                            li { margin-bottom: 5px; }
+                          </style>
+                        </head>
+                        <body>
+                          <h1>${activeCanvasContent.title}</h1>
+                          ${printableHtml}
+                          <script>
+                            window.onload = function() {
+                              window.print();
+                              window.onafterprint = function() { window.close(); };
+                            }
+                          </script>
+                        </body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                  }}
+                  className="text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-2.5 py-1 font-medium transition-colors cursor-pointer"
+                >
+                  Print / Export PDF
+                </button>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
